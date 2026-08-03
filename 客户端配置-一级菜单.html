@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>一级菜单 — 运营管理系统</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;font-size:13px;background:#f0f2f5;display:flex;height:100vh;overflow:hidden;color:#333}
+/* ── Sidebar ── */
+.sidebar{width:188px;min-width:188px;background:#1a3a5c;color:#fff;display:flex;flex-direction:column;height:100vh;overflow-y:auto;flex-shrink:0}
+.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:2px}
+.sidebar-logo{padding:14px 16px 12px;background:#143050;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.sidebar-logo .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,#4096ff,#1677ff);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.sidebar-logo .brand{font-size:14px;font-weight:600;color:#fff;line-height:1.3}
+.nav-item{display:flex;align-items:center;gap:8px;padding:11px 16px;cursor:pointer;color:rgba(255,255,255,.78);transition:all .18s;font-size:13px}
+.nav-item:hover{background:rgba(64,150,255,.18);color:#fff}
+.nav-item.active{background:rgba(64,150,255,.25);color:#fff}
+.nav-item.parent{justify-content:space-between}
+.nav-item .icon{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.nav-sub{overflow:hidden;max-height:0;transition:max-height .28s ease;background:rgba(0,0,0,.18)}
+.nav-sub.open{max-height:600px}
+.nav-sub-item{display:block;padding:9px 16px 9px 42px;color:rgba(255,255,255,.62);cursor:pointer;font-size:12px;transition:all .18s}
+.nav-sub-item:hover{color:#fff;background:rgba(64,150,255,.15)}
+.nav-sub-item.active{color:#69b1ff;background:rgba(64,150,255,.22);font-weight:500}
+.arrow{font-size:11px;transition:transform .28s;color:rgba(255,255,255,.45)}
+.arrow.open{transform:rotate(90deg)}
+/* ── Main ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{background:#fff;padding:0 16px;height:46px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e8e8e8;flex-shrink:0}
+.breadcrumb{display:flex;align-items:center;gap:5px;color:#888;font-size:12px}
+.breadcrumb .sep{color:#d9d9d9}
+.breadcrumb .cur{color:#1677ff}
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.topbar-icon{width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:50%;color:#888;font-size:14px}
+.topbar-icon:hover{background:#f0f2f5}
+.avatar{width:28px;height:28px;background:#1677ff;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;cursor:pointer;font-weight:600}
+/* ── Content ── */
+.content{flex:1;padding:12px 14px;overflow:hidden;display:flex;flex-direction:column;gap:10px}
+.card{background:#fff;border-radius:6px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+/* ── Section panels ── */
+.section{display:none;flex-direction:column;flex:1;gap:10px;min-height:0}
+.section.active{display:flex}
+/* ── Filter ── */
+.filter-row{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap}
+.field{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.field label{white-space:nowrap;color:#666;font-size:12px;flex-shrink:0}
+.fselect{height:30px;border:1px solid #d9d9d9;border-radius:4px;padding:0 8px;font-size:12px;outline:none;color:#333;background:#fff;width:160px}
+.fselect:focus{border-color:#1677ff;box-shadow:0 0 0 2px rgba(22,119,255,.1)}
+/* ── Buttons ── */
+.btn{height:30px;padding:0 14px;border:none;border-radius:4px;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:4px;transition:all .18s;white-space:nowrap}
+.btn-primary{background:#1677ff;color:#fff}
+.btn-primary:hover{background:#4096ff}
+.btn-default{background:#fff;color:#555;border:1px solid #d9d9d9}
+.btn-default:hover:not(:disabled){color:#1677ff;border-color:#1677ff}
+.btn-danger{background:#ff4d4f;color:#fff;border:1px solid #ff4d4f}
+.btn-danger:hover:not(:disabled){background:#ff7875}
+.btn-reset{background:#fff;color:#666;border:1px solid #d9d9d9}
+.btn-reset:hover{background:#f5f5f5}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+/* ── Action bar ── */
+.action-bar{display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap}
+/* ── Table ── */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;table-layout:auto}
+thead th{background:#f5f8ff;padding:9px 10px;text-align:left;font-weight:600;color:#4a5568;font-size:12px;border-bottom:2px solid #dce8ff;white-space:nowrap;position:sticky;top:0;z-index:2}
+th.col-op,td.col-op{position:sticky;right:0;z-index:3;background:#f5f8ff;box-shadow:-3px 0 6px rgba(0,0,0,.06)}
+td.col-op{background:#fff}
+tbody tr:hover td.col-op{background:#f0f6ff}
+tbody tr.selected td.col-op{background:#e6f4ff}
+tbody td{padding:8px 10px;border-bottom:1px solid #f0f3fa;color:#333;font-size:12px;vertical-align:middle}
+tbody tr:hover{background:#f0f6ff}
+tbody tr.selected{background:#e6f4ff}
+.cb{width:14px;height:14px;cursor:pointer;accent-color:#1677ff}
+.op-link{color:#1677ff;cursor:pointer;font-size:12px}
+.op-link:hover{text-decoration:underline}
+/* ── Badges ── */
+.badge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:500;white-space:nowrap}
+.badge-orange{background:#fff7e6;color:#d46b08;border:1px solid #ffd591}
+.badge-green{background:#f6ffed;color:#389e0d;border:1px solid #b7eb8f}
+.badge-blue{background:#e6f4ff;color:#1677ff;border:1px solid #91caff}
+.badge-gray{background:#f5f5f5;color:#8c8c8c;border:1px solid #d9d9d9}
+.badge-red{background:#fff1f0;color:#cf1322;border:1px solid #ffa39e}
+.badge-purple{background:#f9f0ff;color:#722ed1;border:1px solid #d3adf7}
+/* ── Icon cell ── */
+.icon-cell{width:30px;height:30px;background:#e6f4ff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px}
+/* ── Pager ── */
+.pager{display:flex;align-items:center;gap:5px;padding-top:10px;border-top:1px solid #f0f0f0;margin-top:4px;flex-wrap:wrap}
+.pager .total{color:#666;font-size:12px;margin-right:4px}
+.pager select{height:26px;border:1px solid #d9d9d9;border-radius:4px;padding:0 4px;font-size:12px}
+.pager .pg-btn{min-width:28px;height:28px;border:1px solid #d9d9d9;background:#fff;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:#555}
+.pager .pg-btn:hover,.pager .pg-btn.active{background:#1677ff;color:#fff;border-color:#1677ff}
+.pager .pg-btn:disabled{opacity:.35;cursor:default;pointer-events:none}
+.pager .jumper{display:flex;align-items:center;gap:4px;font-size:12px;color:#666;margin-left:4px}
+.pager .jumper input{width:42px;height:26px;border:1px solid #d9d9d9;border-radius:4px;text-align:center;font-size:12px;outline:none}
+/* ── Modal ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,21,41,.5);z-index:1000;backdrop-filter:blur(2px)}
+.modal-box{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.18);z-index:1001;flex-direction:column}
+.modal-hd{padding:18px 24px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.modal-hd .modal-title{font-size:16px;font-weight:600;color:#1a3a5c}
+.modal-hd .close-btn{cursor:pointer;font-size:22px;color:#bbb;line-height:1;padding:0 3px;transition:color .2s}
+.modal-hd .close-btn:hover{color:#666}
+.modal-bd{padding:20px 24px;overflow-y:auto;flex:1}
+.modal-ft{padding:14px 24px;border-top:1px solid #f0f0f0;display:flex;gap:10px;justify-content:flex-end;flex-shrink:0;background:#fafbfc}
+/* ── Form ── */
+.form-grid{display:grid;grid-template-columns:1fr;gap:16px}
+.form-grid.two{grid-template-columns:1fr 1fr}
+.form-item{display:flex;flex-direction:column;gap:6px}
+.form-item label{font-size:12px;color:#555;font-weight:500}
+.form-item label .req{color:#ff4d4f;margin-right:2px}
+.form-item input,.form-item select{border:1px solid #d9d9d9;border-radius:4px;padding:7px 11px;font-size:12px;outline:none;width:100%;background:#fff;color:#333;transition:border-color .2s,box-shadow .2s}
+.form-item input:focus,.form-item select:focus{border-color:#1677ff;box-shadow:0 0 0 2px rgba(22,119,255,.1)}
+.form-item input[readonly]{background:#f5f5f5;color:#999;cursor:not-allowed}
+.form-item .radio-group{display:flex;gap:16px;padding:4px 0}
+.form-item .radio-group label{display:flex;align-items:center;gap:5px;cursor:pointer;font-weight:normal;font-size:12px;white-space:nowrap}
+.form-item .radio-group input[type="radio"]{accent-color:#1677ff;cursor:pointer}
+.err-msg{color:#ff4d4f;font-size:11px;margin-top:3px;display:none}
+.err-msg.show{display:block}
+.form-item.error input,.form-item.error select{border-color:#ff4d4f}
+/* ── Section divider in modal ── */
+.sec-divider{border:none;border-top:1px solid #f0f0f0;margin:16px 0}
+.sec-label{font-size:12px;font-weight:600;color:#1a3a5c;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.sec-label::before{content:'';width:3px;height:13px;background:#1677ff;border-radius:2px;flex-shrink:0}
+/* ── Preset tab cards ── */
+.preset-tab-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px}
+.preset-tab-card{border:1.5px solid #e0e0e0;border-radius:8px;padding:10px 12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px;background:#fff;user-select:none}
+.preset-tab-card:hover{border-color:#4096ff;background:#f0f6ff}
+.preset-tab-card.checked{border-color:#1677ff;background:#e6f4ff}
+.preset-tab-card input[type="checkbox"]{accent-color:#1677ff;width:14px;height:14px;cursor:pointer;flex-shrink:0}
+.preset-tab-card .ptab-name{font-size:13px;font-weight:500;color:#333}
+/* ── Custom tab input row ── */
+.custom-tab-row{display:flex;gap:8px;align-items:flex-start}
+.custom-tab-row input{flex:1;height:30px;border:1px solid #d9d9d9;border-radius:4px;padding:0 10px;font-size:12px;outline:none}
+.custom-tab-row input:focus{border-color:#1677ff;box-shadow:0 0 0 2px rgba(22,119,255,.1)}
+/* ── Configured tabs list ── */
+.config-tab-list{border:1px solid #f0f0f0;border-radius:6px;overflow:hidden;min-height:60px;background:#fafbfc}
+.config-tab-empty{display:flex;align-items:center;justify-content:center;height:60px;color:#bbb;font-size:12px}
+.config-tab-item{display:flex;align-items:center;padding:8px 12px;border-bottom:1px solid #f0f0f0;font-size:12px;background:#fff;gap:8px}
+.config-tab-item:last-child{border-bottom:none}
+.config-tab-item:hover{background:#fafafa}
+.config-tab-item .cti-sort{width:20px;height:20px;background:#f0f2f5;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#999;flex-shrink:0}
+.config-tab-item .cti-name{flex:1;font-weight:500;color:#333}
+.config-tab-item .cti-link{flex:1;color:#999;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.config-tab-item .cti-del{color:#ff4d4f;cursor:pointer;font-size:12px;padding:2px 6px;border-radius:3px;flex-shrink:0;border:none;background:none}
+.config-tab-item .cti-del:hover{background:#fff1f0}
+/* ── Toast ── */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#fff;border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:12px 20px;z-index:3000;display:none;align-items:center;gap:10px;font-size:13px}
+.toast.show{display:flex;animation:slideDown .3s}
+.toast.success{border-color:#52c41a;background:#f6ffed}
+.toast.error{border-color:#ff4d4f;background:#fff1f0}
+.toast.warning{border-color:#faad14;background:#fffbe6}
+.toast-icon{font-size:16px}
+@keyframes slideDown{from{opacity:0;transform:translate(-50%,-20px)}to{opacity:1;transform:translate(-50%,0)}}
+/* ── Confirm ── */
+.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,21,41,.5);z-index:2500;align-items:center;justify-content:center}
+.confirm-overlay.show{display:flex}
+.confirm-box{background:#fff;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.2);width:440px;max-width:90vw}
+.confirm-hd{padding:16px 20px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600;color:#1a3a5c}
+.confirm-bd{padding:20px;font-size:13px;line-height:1.7;color:#333}
+.confirm-ft{padding:12px 20px;border-top:1px solid #f0f0f0;display:flex;gap:8px;justify-content:flex-end}
+/* ── Icon upload ── */
+.icon-upload-area{display:flex;align-items:flex-start;gap:12px}
+.icon-prev-box{width:54px;height:54px;border:1px solid #e0e0e0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:28px;background:#f9f9f9;overflow:hidden;flex-shrink:0}
+.icon-prev-box img{width:100%;height:100%;object-fit:cover}
+/* ── Ref table ── */
+.ref-table{width:100%;border-collapse:collapse;font-size:12px}
+.ref-table th{padding:6px 10px;text-align:left;border-bottom:1px solid #e8e8e8;color:#666;font-weight:500;background:#f5f8ff;white-space:nowrap}
+.ref-table td{padding:6px 10px;border-bottom:1px solid #f5f5f5;vertical-align:middle}
+.ref-table tbody tr:last-child td{border-bottom:none}
+</style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">运</div>
+    <div class="brand">运营管理系统</div>
+  </div>
+          <nav id="nav">
+    <div class="nav-item" onclick="location.href='index.html'"><span class="icon">🏠</span>首页</div>
+    <div class="nav-item parent" onclick="toggleNav('product')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">📦</span>产品管理</span>
+      <span class="arrow" id="arrow-product">›</span>
+    </div>
+    <div class="nav-sub" id="sub-product">
+      <div class="nav-sub-item" onclick="location.href='产品池.html'">产品池</div>
+      <div class="nav-sub-item" onclick="location.href='定价维度.html'">定价维度</div>
+      <div class="nav-sub-item" onclick="location.href='产品定价.html'">产品定价</div>
+      <div class="nav-sub-item" onclick="location.href='产品分配.html'">产品分配</div>
+      <div class="nav-sub-item">申请跨区推广</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('client')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">⚙️</span>客户端配置</span>
+      <span class="arrow" id="arrow-client">›</span>
+    </div>
+    <div class="nav-sub" id="sub-client">
+      <div class="nav-sub-item active" onclick="location.href='客户端配置-一级菜单.html'">一级菜单</div>
+      <div class="nav-sub-item">工作台</div>
+      <div class="nav-sub-item" onclick="location.href='客户端配置-财税业务.html'">财税业务</div>
+      <div class="nav-sub-item">服务培训</div>
+      <div class="nav-sub-item">应用市场</div>
+      <div class="nav-sub-item">常用工具</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('equity')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">🏢</span>权益配置</span>
+      <span class="arrow" id="arrow-equity">›</span>
+    </div>
+    <div class="nav-sub" id="sub-equity">
+      <div class="nav-sub-item" onclick="location.href='权益配置.html'">权益配置</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('salecfg')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">📄</span>销售配置</span>
+      <span class="arrow" id="arrow-salecfg">›</span>
+    </div>
+    <div class="nav-sub" id="sub-salecfg">
+      <div class="nav-sub-item">协议模板</div>
+      <div class="nav-sub-item" onclick="location.href='支付配置.html'">支付配置</div>
+      <div class="nav-sub-item">开票配置</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('sales')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">💰</span>销售中心</span>
+      <span class="arrow" id="arrow-sales">›</span>
+    </div>
+    <div class="nav-sub" id="sub-sales">
+      <div class="nav-sub-item" onclick="location.href='订单管理.html'">订单管理</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('analysis')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">📊</span>统计分析</span>
+      <span class="arrow" id="arrow-analysis">›</span>
+    </div>
+    <div class="nav-sub" id="sub-analysis">
+      <div class="nav-sub-item" onclick="location.href='一户式视图.html'">一户式视图</div>
+      <div class="nav-sub-item" onclick="location.href='活跃度分析.html'">活跃度分析</div>
+      <div class="nav-sub-item" onclick="location.href='应用分析.html'">应用分析</div>
+      <div class="nav-sub-item" onclick="location.href='销售统计.html'">销售统计</div>
+    </div>
+    <div class="nav-item"><span class="icon">👥</span>用户中心</div>
+    <div class="nav-item"><span class="icon">💬</span>消息中心</div>
+  </nav>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<div class="main">
+  <div class="topbar">
+    <div class="breadcrumb">
+      <span onclick="location.href='index.html'" style="cursor:pointer">首页</span>
+      <span class="sep">/</span>
+      <span>客户端配置</span>
+      <span class="sep">/</span>
+      <span class="cur">一级菜单</span>
+    </div>
+    <div class="topbar-actions">
+      <div class="topbar-icon" title="搜索">🔍</div>
+      <div class="topbar-icon" title="帮助">❓</div>
+      <div class="topbar-icon" title="全屏">⛶</div>
+      <div class="avatar" title="管理员">管</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══ 一级菜单 ══ -->
+    <div class="section active" id="section-menu">
+      <div class="card" style="flex-shrink:0">
+        <div class="filter-row">
+          <div class="field">
+            <label>所属单位</label>
+            <select class="fselect" id="menu-f-unit">
+              <option value="">全部</option>
+              <option value="总公司">总公司</option>
+              <option value="区域公司">区域公司</option>
+              <option value="北京分公司">北京分公司</option>
+              <option value="上海分公司">上海分公司</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="searchMenu()">🔍 搜索</button>
+          <button class="btn btn-reset" onclick="resetMenuFilter()">↺ 重置</button>
+        </div>
+      </div>
+      <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;padding-bottom:0">
+        <div class="action-bar">
+          <button class="btn btn-primary" onclick="openMenuModal()">＋ 新增</button>
+          <button class="btn btn-default" id="menu-btn-edit" disabled onclick="editMenuSelected()">✎ 修改</button>
+          <button class="btn btn-danger" id="menu-btn-del" disabled onclick="deleteMenuSelected()">✕ 删除</button>
+          <button class="btn btn-default" id="menu-btn-lock" disabled onclick="batchMenuLock()">🔒 锁定\解锁</button>
+          <button class="btn btn-default" id="menu-btn-vis" disabled onclick="batchMenuVisible()">👁 显示\隐藏</button>
+          <button class="btn btn-default" id="menu-btn-pub" disabled onclick="batchMenuPublish()">📤 发布</button>
+        </div>
+        <div class="tbl-wrap" style="flex:1;overflow:auto">
+          <table id="menu-table">
+            <thead>
+              <tr>
+                <th style="width:36px"><input type="checkbox" class="cb" id="menu-cb-all" onchange="menuToggleAll(this)"></th>
+                <th style="width:46px">序号</th>
+                <th style="min-width:80px">所属单位</th>
+                <th style="min-width:80px">一级菜单</th>
+                <th style="width:50px;text-align:center">排序</th>
+                <th style="width:60px;text-align:center">图标</th>
+                <th style="width:76px;text-align:center">是否启动页</th>
+                <th style="width:72px;text-align:center">锁定/解锁</th>
+                <th style="width:72px;text-align:center">显示/隐藏</th>
+                <th style="width:84px;text-align:center">发布/未发布</th>
+                <th style="width:84px;text-align:center">是否出厂设置</th>
+                <th>创建人</th>
+                <th style="min-width:120px">创建时间</th>
+                <th>修改人</th>
+                <th style="min-width:120px">修改时间</th>
+              </tr>
+            </thead>
+            <tbody id="menu-tbody"></tbody>
+          </table>
+        </div>
+        <div class="pager" id="menu-pager" style="padding:10px 0 12px;flex-shrink:0"></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ══ Toast ══ -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toast-icon"></span>
+  <span id="toast-msg"></span>
+</div>
+
+<!-- ══ Confirm ══ -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-hd"><span id="confirm-icon"></span><span id="confirm-title"></span></div>
+    <div class="confirm-bd" id="confirm-body"></div>
+    <div class="confirm-ft">
+      <button class="btn btn-default" onclick="closeConfirm()">取消</button>
+      <button class="btn btn-primary" id="confirm-ok-btn" onclick="confirmOk()">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 一级菜单 Modal ══ -->
+<div class="modal-overlay" id="menu-overlay" onclick="closeMenuModal()"></div>
+<div class="modal-box" id="menu-modal" style="width:700px;max-width:95vw;max-height:92vh">
+  <div class="modal-hd">
+    <span class="modal-title" id="menu-modal-title">新增一级菜单</span>
+    <span class="close-btn" onclick="closeMenuModal()">×</span>
+  </div>
+  <div class="modal-bd" id="menu-modal-body"></div>
+  <div class="modal-ft">
+    <button class="btn btn-default" onclick="closeMenuModal()">取消</button>
+    <button class="btn btn-primary" onclick="saveMenuForm()">确定</button>
+  </div>
+</div>
+
+<script>
+// ══ 通用工具 ══
+function nowTime(){const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;}
+function showToast(msg,type='success'){const t=document.getElementById('toast'),icon=document.getElementById('toast-icon'),m=document.getElementById('toast-msg');t.className='toast show '+type;icon.textContent=type==='success'?'✓':type==='error'?'✕':'⚠';m.textContent=msg;setTimeout(()=>t.classList.remove('show'),2800);}
+let _confirmCb=null;
+function showConfirm(title,body,icon,cb,okText='确定',okCls='btn-primary'){document.getElementById('confirm-title').textContent=title;document.getElementById('confirm-body').innerHTML=body;document.getElementById('confirm-icon').textContent=icon;const ok=document.getElementById('confirm-ok-btn');ok.textContent=okText;ok.className='btn '+okCls;_confirmCb=cb;document.getElementById('confirm-overlay').classList.add('show');}
+function closeConfirm(){document.getElementById('confirm-overlay').classList.remove('show');_confirmCb=null;}
+function confirmOk(){if(_confirmCb)_confirmCb();closeConfirm();}
+function showModal(ovId,boxId){document.getElementById(ovId).style.display='block';document.getElementById(boxId).style.display='flex';}
+function hideModal(ovId,boxId){document.getElementById(ovId).style.display='none';document.getElementById(boxId).style.display='none';}
+function renderPager(filteredArr,curPage,pageSize,pageElId,onGo,onSize){
+  const total=filteredArr.length,pages=Math.ceil(total/pageSize)||1;
+  let h=`<span class="total">共 ${total} 条</span><select onchange="(${onSize})(+this.value)">${[10,20,50].map(n=>`<option ${pageSize==n?'selected':''}>${n}条/页</option>`).join('')}</select>`;
+  h+=`<button class="pg-btn" onclick="(${onGo})(${curPage-1})" ${curPage===1?'disabled':''}>‹</button>`;
+  let arr=[];if(pages<=7){for(let i=1;i<=pages;i++)arr.push(i);}else{arr=[1];if(curPage>3)arr.push('…');for(let i=Math.max(2,curPage-1);i<=Math.min(pages-1,curPage+1);i++)arr.push(i);if(curPage<pages-2)arr.push('…');arr.push(pages);}
+  arr.forEach(p=>{h+=p==='…'?`<span style="padding:0 3px;color:#bbb">…</span>`:`<button class="pg-btn ${p===curPage?'active':''}" onclick="(${onGo})(${p})">${p}</button>`;});
+  h+=`<button class="pg-btn" onclick="(${onGo})(${curPage+1})" ${curPage===pages?'disabled':''}>›</button>`;
+  h+=`<span class="jumper">前往<input type="number" min="1" max="${pages}" onkeydown="if(event.key==='Enter')(${onGo})(+this.value)">页</span>`;
+  document.getElementById(pageElId).innerHTML=h;
+}
+
+// ══ Sidebar ══
+function toggleNav(key){const s=document.getElementById('sub-'+key),a=document.getElementById('arrow-'+key);s.classList.toggle('open');a.classList.toggle('open');}
+
+// ════════════════════════════════════
+// ══ 一级菜单 ══
+// ════════════════════════════════════
+const MENU_TYPES=['工作台','财税业务','服务培训','应用市场','自定义'];
+const MENU_TYPE_DEFAULTS={
+  '工作台': {icon:'🏠',sort:0,isHome:true},
+  '财税业务':{icon:'📊',sort:1,isHome:false},
+  '服务培训':{icon:'🎓',sort:2,isHome:false},
+  '应用市场':{icon:'🛒',sort:3,isHome:false},
+  '自定义':  {icon:'📄',sort:99,isHome:false},
+};
+const MENU_UNIT_OPTS=['总公司','区域公司','北京分公司','上海分公司','广州分公司','成都分公司'];
+let _iconDataUrl='';
+
+const menuData=[
+  {id:'MN001',unit:'总公司',menuType:'工作台',menuName:'工作台',sort:0,icon:'🏠',iconUrl:'',isHome:true,locked:true,visible:true,published:true,preset:true,accessLink:'',apiLink:'',customParams:'',creator:'管理员',createTime:'2024-01-15 09:00:00',updater:'管理员',updateTime:'2025-03-10 10:00:00'},
+  {id:'MN002',unit:'总公司',menuType:'财税业务',menuName:'财税业务',sort:1,icon:'📊',iconUrl:'',isHome:false,locked:true,visible:true,published:true,preset:true,accessLink:'',apiLink:'',customParams:'',creator:'管理员',createTime:'2024-01-15 09:05:00',updater:'管理员',updateTime:'2025-03-10 10:00:00'},
+  {id:'MN003',unit:'总公司',menuType:'服务培训',menuName:'服务培训',sort:2,icon:'🎓',iconUrl:'',isHome:false,locked:false,visible:true,published:true,preset:true,accessLink:'',apiLink:'',customParams:'',creator:'管理员',createTime:'2024-01-15 09:10:00',updater:'张某',updateTime:'2025-06-20 14:00:00'},
+  {id:'MN004',unit:'总公司',menuType:'应用市场',menuName:'应用市场',sort:3,icon:'🛒',iconUrl:'',isHome:false,locked:false,visible:true,published:true,preset:true,accessLink:'',apiLink:'',customParams:'',creator:'管理员',createTime:'2024-01-15 09:15:00',updater:'张某',updateTime:'2025-07-01 09:15:00'},
+  {id:'MN005',unit:'北京分公司',menuType:'工作台',menuName:'工作台',sort:0,icon:'🏠',iconUrl:'',isHome:true,locked:true,visible:true,published:true,preset:true,accessLink:'',apiLink:'',customParams:'',creator:'王某',createTime:'2024-09-01 09:00:00',updater:'王某',updateTime:'2025-03-20 11:00:00'},
+  {id:'MN006',unit:'北京分公司',menuType:'财税业务',menuName:'财税业务',sort:1,icon:'📊',iconUrl:'',isHome:false,locked:true,visible:true,published:true,preset:true,accessLink:'',apiLink:'',customParams:'',creator:'王某',createTime:'2024-09-01 09:05:00',updater:'王某',updateTime:'2025-03-20 11:00:00'},
+  {id:'MN007',unit:'北京分公司',menuType:'服务培训',menuName:'服务培训',sort:2,icon:'🎓',iconUrl:'',isHome:false,locked:false,visible:true,published:true,preset:true,accessLink:'',apiLink:'',customParams:'',creator:'王某',createTime:'2024-09-01 09:10:00',updater:'李某',updateTime:'2025-05-18 15:30:00'},
+  {id:'MN008',unit:'北京分公司',menuType:'应用市场',menuName:'应用市场',sort:3,icon:'🛒',iconUrl:'',isHome:false,locked:false,visible:true,published:true,preset:true,accessLink:'',apiLink:'',customParams:'',creator:'王某',createTime:'2024-09-01 09:15:00',updater:'李某',updateTime:'2025-05-18 15:30:00'},
+  {id:'MN009',unit:'北京分公司',menuType:'自定义',menuName:'政策资讯',sort:4,icon:'📰',iconUrl:'',isHome:false,locked:false,visible:true,published:true,preset:false,accessLink:'https://policy.bj-branch.com',apiLink:'https://api.bj-branch.com/policy',customParams:'{"region":"beijing","type":"policy"}',creator:'李某',createTime:'2025-03-10 14:00:00',updater:'李某',updateTime:'2025-07-20 10:30:00'},
+];
+let menuFiltered=[...menuData],menuSel=new Set(),menuPage=1,menuPageSize=10;
+
+function updateMenuBtns(){const n=menuSel.size;document.getElementById('menu-btn-edit').disabled=n!==1;document.getElementById('menu-btn-del').disabled=n===0;document.getElementById('menu-btn-lock').disabled=n===0;document.getElementById('menu-btn-vis').disabled=n===0;document.getElementById('menu-btn-pub').disabled=n===0;}
+
+function renderMenuTable(){
+  const start=(menuPage-1)*menuPageSize,rows=menuFiltered.slice(start,start+menuPageSize);
+  document.getElementById('menu-tbody').innerHTML=rows.map((r,i)=>`
+    <tr class="${menuSel.has(r.id)?'selected':''}" onclick="menuToggleRow('${r.id}',event)" style="cursor:pointer">
+      <td><input type="checkbox" class="cb" ${menuSel.has(r.id)?'checked':''} onclick="event.stopPropagation()" onchange="menuToggleRow('${r.id}',event)"></td>
+      <td style="color:#999;text-align:center">${start+i+1}</td>
+      <td>${r.unit}</td>
+      <td style="font-weight:500">${r.menuName}</td>
+      <td style="text-align:center;color:#666">${r.sort}</td>
+      <td style="text-align:center"><div class="icon-cell" style="margin:0 auto">${r.icon}</div></td>
+      <td style="text-align:center">${r.isHome?'<span class="badge badge-blue">是</span>':'<span class="badge badge-gray">否</span>'}</td>
+      <td style="text-align:center">${r.locked?'<span class="badge badge-orange">锁定</span>':'<span class="badge badge-green">解锁</span>'}</td>
+      <td style="text-align:center">${r.visible?'<span class="badge badge-blue">显示</span>':'<span class="badge badge-gray">隐藏</span>'}</td>
+      <td style="text-align:center">${r.published?'<span class="badge badge-green">发布</span>':'<span class="badge badge-gray">未发布</span>'}</td>
+      <td style="text-align:center">${r.preset?'<span class="badge badge-purple">是</span>':'<span class="badge badge-gray">否</span>'}</td>
+      <td>${r.creator||'—'}</td>
+      <td style="color:#666;white-space:nowrap">${r.createTime||'—'}</td>
+      <td>${r.updater||'—'}</td>
+      <td style="color:#666;white-space:nowrap">${r.updateTime||'—'}</td>
+    </tr>`).join('');
+  document.getElementById('menu-cb-all').checked=rows.length>0&&rows.every(r=>menuSel.has(r.id));
+  renderPager(menuFiltered,menuPage,menuPageSize,'menu-pager','menuGoPage','menuChangeSize');
+  updateMenuBtns();
+}
+function menuGoPage(p){const pages=Math.ceil(menuFiltered.length/menuPageSize)||1;if(p<1||p>pages)return;menuPage=p;renderMenuTable();}
+function menuChangeSize(v){menuPageSize=+v;menuPage=1;renderMenuTable();}
+function menuToggleAll(cb){const start=(menuPage-1)*menuPageSize;menuFiltered.slice(start,start+menuPageSize).forEach(r=>cb.checked?menuSel.add(r.id):menuSel.delete(r.id));renderMenuTable();}
+function menuToggleRow(id,e){if(e.target.type==='checkbox'){if(e.target.checked)menuSel.add(id);else menuSel.delete(id);renderMenuTable();return;}menuSel.has(id)?menuSel.delete(id):menuSel.add(id);renderMenuTable();}
+function searchMenu(){const u=document.getElementById('menu-f-unit').value;menuFiltered=menuData.filter(r=>!u||r.unit===u);menuPage=1;menuSel.clear();renderMenuTable();}
+function resetMenuFilter(){document.getElementById('menu-f-unit').value='';menuFiltered=[...menuData];menuPage=1;menuSel.clear();renderMenuTable();}
+function editMenuSelected(){if(menuSel.size!==1)return;openMenuModal([...menuSel][0]);}
+function deleteMenuSelected(){
+  if(!menuSel.size)return;
+  const names=menuFiltered.filter(r=>menuSel.has(r.id)).map(r=>r.menuName);
+  showConfirm('确认删除',`即将删除 ${menuSel.size} 条记录：<br><b>${names.join('、')}</b>`,'🗑',()=>{
+    menuSel.forEach(id=>{const i=menuData.findIndex(r=>r.id===id);if(i>-1)menuData.splice(i,1);});
+    menuFiltered=menuFiltered.filter(r=>!menuSel.has(r.id));menuSel.clear();renderMenuTable();
+    showToast('删除成功');
+  },'删除','btn-danger');
+}
+function batchMenuLock(){if(!menuSel.size)return;menuFiltered.filter(r=>menuSel.has(r.id)).forEach(r=>{r.locked=!r.locked;r.updater='管理员';r.updateTime=nowTime();});renderMenuTable();showToast('操作成功');}
+function batchMenuVisible(){if(!menuSel.size)return;menuFiltered.filter(r=>menuSel.has(r.id)).forEach(r=>{r.visible=!r.visible;r.updater='管理员';r.updateTime=nowTime();});renderMenuTable();showToast('操作成功');}
+function batchMenuPublish(){if(!menuSel.size)return;menuFiltered.filter(r=>menuSel.has(r.id)).forEach(r=>{r.published=true;r.updater='管理员';r.updateTime=nowTime();});renderMenuTable();showToast('发布成功');}
+
+// ── 一级菜单 Modal ──
+function buildMenuFormHTML(r,isEdit){
+  const unitOpts=MENU_UNIT_OPTS.map(u=>`<option value="${u}"${r&&r.unit===u?' selected':''} >${u}</option>`).join('');
+  const typeOpts=MENU_TYPES.map(t=>`<option value="${t}"${r&&r.menuType===t?' selected':''}>${t}</option>`).join('');
+  const isCustom=r&&r.menuType==='自定义';
+  const iconVal=r?r.icon:'';
+  const iconUrl=r?r.iconUrl:'';
+  const showConfig=isEdit?'':'display:none';
+  const showRef=isEdit?'':'display:none';
+
+  return `
+    <div class="form-grid two" style="gap:14px;margin-bottom:4px">
+      <div class="form-item">
+        <label><span class="req">*</span>所属单位</label>
+        ${isEdit
+          ?`<input value="${r.unit}" readonly>`
+          :`<select id="mf-unit" onchange="onMenuUnitChange()"><option value="">请选择所属单位</option>${unitOpts}</select>
+            <div class="err-msg" id="err-mf-unit">请选择所属单位</div>`}
+      </div>
+      <div class="form-item">
+        <label><span class="req">*</span>一级菜单</label>
+        ${isEdit
+          ?`<input value="${r.menuType}" readonly>`
+          :`<select id="mf-type" onchange="onMenuTypeChange()" disabled>
+              <option value="">请先选择所属单位</option>${typeOpts}
+            </select>
+            <div class="err-msg" id="err-mf-type">请选择一级菜单</div>`}
+      </div>
+    </div>
+    <div id="menu-config-section" style="${showConfig}">
+      <hr class="sec-divider">
+      <div class="sec-label">菜单配置</div>
+      <div class="form-grid two" style="gap:14px">
+        <div class="form-item" style="grid-column:1/-1">
+          <label><span class="req">*</span>菜单名</label>
+          <input id="mf-name" value="${r?r.menuName:''}" placeholder="请输入菜单名称">
+          <div class="err-msg" id="err-mf-name">请输入菜单名称</div>
+        </div>
+        <div class="form-item">
+          <label>图标</label>
+          <div class="icon-upload-area">
+            <div class="icon-prev-box" id="mf-icon-preview">
+              ${iconUrl?`<img src="${iconUrl}" alt="">`:`<span>${iconVal||'📄'}</span>`}
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <input type="file" accept="image/*" id="mf-icon-file" style="display:none" onchange="onIconUpload(this)">
+              <button class="btn btn-default" type="button" style="width:fit-content" onclick="document.getElementById('mf-icon-file').click()">上传图片</button>
+              <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#888">
+                Emoji：<input id="mf-icon-emoji" value="${iconVal}" placeholder="🏠" style="width:52px;border:1px solid #d9d9d9;border-radius:4px;padding:3px 6px;font-size:13px;outline:none" oninput="onEmojiInput()">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="form-item">
+          <label>排序</label>
+          <input id="mf-sort" type="number" min="0" value="${r?r.sort:0}">
+        </div>
+        <div class="form-item">
+          <label>是否启动页</label>
+          <div class="radio-group">
+            <label><input type="radio" name="mf-home" value="1" ${r&&r.isHome?'checked':''}> 是</label>
+            <label><input type="radio" name="mf-home" value="0" ${!r||!r.isHome?'checked':''}> 否</label>
+          </div>
+        </div>
+        <div class="form-item">
+          <label>是否隐藏</label>
+          <div class="radio-group">
+            <label><input type="radio" name="mf-hidden" value="1" ${r&&!r.visible?'checked':''}> 隐藏</label>
+            <label><input type="radio" name="mf-hidden" value="0" ${!r||r.visible?'checked':''}> 显示</label>
+          </div>
+        </div>
+        <div class="form-item" style="grid-column:1/-1;${isCustom?'':'display:none'}" id="mf-access-field">
+          <label>跳转链接</label>
+          <input id="mf-access" value="${r?r.accessLink||'':''}" placeholder="https://...">
+        </div>
+        <div class="form-item" style="grid-column:1/-1;${isCustom?'':'display:none'}" id="mf-api-field">
+          <label>API 地址</label>
+          <input id="mf-api" value="${r?r.apiLink||'':''}" placeholder="https://api...">
+        </div>
+        <div class="form-item" style="grid-column:1/-1;${isCustom?'':'display:none'}" id="mf-params-field">
+          <label>自定义参数</label>
+          <textarea id="mf-params" rows="3" style="border:1px solid #d9d9d9;border-radius:4px;padding:7px 11px;font-size:12px;outline:none;width:100%;resize:vertical;font-family:monospace;transition:border-color .2s,box-shadow .2s" placeholder='{"key":"value"}'>${r?r.customParams||'':''}</textarea>
+        </div>
+      </div>
+    </div>
+    <div id="menu-ref-section" style="${showRef}">
+      <hr class="sec-divider">
+      <div class="sec-label">该单位已配置菜单（参考）</div>
+      <div id="menu-ref-list"></div>
+    </div>`;
+}
+
+function openMenuModal(editId){
+  const isEdit=!!editId,r=isEdit?menuData.find(d=>d.id===editId):null;
+  document.getElementById('menu-modal-title').textContent=isEdit?'修改一级菜单':'新增一级菜单';
+  document.getElementById('menu-modal')._editId=editId||null;
+  _iconDataUrl='';
+  document.getElementById('menu-modal-body').innerHTML=buildMenuFormHTML(r,isEdit);
+  if(isEdit)renderMenuRef(r.unit,r.id);
+  showModal('menu-overlay','menu-modal');
+}
+
+function onMenuUnitChange(){
+  const unit=document.getElementById('mf-unit').value;
+  const typeEl=document.getElementById('mf-type');
+  typeEl.disabled=!unit;
+  typeEl.value='';
+  document.getElementById('menu-config-section').style.display='none';
+  const refSec=document.getElementById('menu-ref-section');
+  if(!unit){refSec.style.display='none';return;}
+  refSec.style.display='';
+  renderMenuRef(unit,null);
+}
+
+function onMenuTypeChange(){
+  const type=document.getElementById('mf-type').value;
+  const sec=document.getElementById('menu-config-section');
+  if(!type){sec.style.display='none';return;}
+  sec.style.display='';
+  const def=MENU_TYPE_DEFAULTS[type];
+  document.getElementById('mf-name').value=type==='自定义'?'':type;
+  document.getElementById('mf-sort').value=def.sort;
+  document.getElementById('mf-icon-emoji').value=def.icon;
+  document.getElementById('mf-icon-preview').innerHTML=`<span>${def.icon}</span>`;
+  _iconDataUrl='';
+  const isCustom=type==='自定义';
+  ['mf-access-field','mf-api-field','mf-params-field'].forEach(id=>{
+    document.getElementById(id).style.display=isCustom?'':'none';
+  });
+  const homeRadios=document.querySelectorAll('input[name="mf-home"]');
+  homeRadios.forEach(r=>r.checked=r.value===(def.isHome?'1':'0'));
+  document.querySelector('input[name="mf-hidden"][value="0"]').checked=true;
+}
+
+function renderMenuRef(unit,excludeId){
+  const list=document.getElementById('menu-ref-list');
+  if(!list)return;
+  const items=menuData.filter(r=>r.unit===unit&&r.id!==excludeId);
+  if(!items.length){list.innerHTML='<div style="padding:12px;color:#bbb;font-size:12px;text-align:center">该单位暂无已配置菜单</div>';return;}
+  list.innerHTML=`<table class="ref-table"><thead><tr>
+    <th>菜单名</th><th>类型</th><th style="text-align:center">排序</th>
+    <th style="text-align:center">启动页</th><th style="text-align:center">显示</th><th style="text-align:center">发布</th>
+  </tr></thead><tbody>
+  ${items.map(r=>`<tr>
+    <td><span style="margin-right:5px">${r.iconUrl?`<img src="${r.iconUrl}" style="width:15px;height:15px;vertical-align:middle;border-radius:3px">`:r.icon}</span><span style="font-weight:500">${r.menuName}</span></td>
+    <td><span class="badge ${r.preset?'badge-blue':'badge-orange'}" style="font-size:10px">${r.preset?'预置':'自定义'}</span></td>
+    <td style="text-align:center;color:#666">${r.sort}</td>
+    <td style="text-align:center">${r.isHome?'<span class="badge badge-blue" style="font-size:10px">是</span>':'<span class="badge badge-gray" style="font-size:10px">否</span>'}</td>
+    <td style="text-align:center">${r.visible?'<span class="badge badge-green" style="font-size:10px">显示</span>':'<span class="badge badge-gray" style="font-size:10px">隐藏</span>'}</td>
+    <td style="text-align:center">${r.published?'<span class="badge badge-green" style="font-size:10px">发布</span>':'<span class="badge badge-gray" style="font-size:10px">未发布</span>'}</td>
+  </tr>`).join('')}
+  </tbody></table>`;
+}
+
+function onIconUpload(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    _iconDataUrl=e.target.result;
+    document.getElementById('mf-icon-preview').innerHTML=`<img src="${_iconDataUrl}" alt="">`;
+    document.getElementById('mf-icon-emoji').value='';
+  };
+  reader.readAsDataURL(file);
+}
+
+function onEmojiInput(){
+  const v=document.getElementById('mf-icon-emoji').value;
+  document.getElementById('mf-icon-preview').innerHTML=`<span>${v||'📄'}</span>`;
+  _iconDataUrl='';
+}
+
+function closeMenuModal(){hideModal('menu-overlay','menu-modal');_iconDataUrl='';}
+
+function saveMenuForm(){
+  const m=document.getElementById('menu-modal'),now=nowTime();
+  if(m._editId){
+    const nameEl=document.getElementById('mf-name');
+    const name=(nameEl.value||'').trim();
+    if(!name){nameEl.closest('.form-item').classList.add('error');document.getElementById('err-mf-name').classList.add('show');return;}
+    const rec=menuData.find(r=>r.id===m._editId);
+    rec.menuName=name;
+    rec.sort=parseInt(document.getElementById('mf-sort').value)||0;
+    const emojiVal=(document.getElementById('mf-icon-emoji').value||'').trim();
+    if(_iconDataUrl){rec.iconUrl=_iconDataUrl;rec.icon=emojiVal||rec.icon;}
+    else if(emojiVal){rec.icon=emojiVal;rec.iconUrl='';}
+    rec.isHome=document.querySelector('input[name="mf-home"]:checked')?.value==='1';
+    rec.visible=document.querySelector('input[name="mf-hidden"]:checked')?.value==='0';
+    if(rec.menuType==='自定义'){
+      rec.accessLink=(document.getElementById('mf-access').value||'').trim();
+      rec.apiLink=(document.getElementById('mf-api').value||'').trim();
+      rec.customParams=(document.getElementById('mf-params').value||'').trim();
+    }
+    rec.updater='管理员';rec.updateTime=now;
+    showToast('修改成功');
+  }else{
+    const unitEl=document.getElementById('mf-unit'),typeEl=document.getElementById('mf-type');
+    const unit=unitEl.value,type=typeEl.value;
+    if(!unit){unitEl.closest('.form-item').classList.add('error');document.getElementById('err-mf-unit').classList.add('show');return;}
+    if(!type){typeEl.closest('.form-item').classList.add('error');document.getElementById('err-mf-type').classList.add('show');return;}
+    const nameEl=document.getElementById('mf-name');
+    const name=(nameEl.value||'').trim();
+    if(!name){nameEl.closest('.form-item').classList.add('error');document.getElementById('err-mf-name').classList.add('show');return;}
+    const maxN=menuData.reduce((acc,r)=>Math.max(acc,+(r.id.replace('MN',''))||0),0);
+    const icon=(document.getElementById('mf-icon-emoji').value||'').trim()||'📄';
+    menuData.push({
+      id:'MN'+String(maxN+1).padStart(3,'0'),unit,menuType:type,menuName:name,
+      sort:parseInt(document.getElementById('mf-sort').value)||0,
+      icon,iconUrl:_iconDataUrl||'',
+      isHome:document.querySelector('input[name="mf-home"]:checked')?.value==='1',
+      locked:false,
+      visible:document.querySelector('input[name="mf-hidden"]:checked')?.value==='0',
+      published:false,preset:type!=='自定义',
+      accessLink:type==='自定义'?(document.getElementById('mf-access').value||'').trim():'',
+      apiLink:type==='自定义'?(document.getElementById('mf-api').value||'').trim():'',
+      customParams:type==='自定义'?(document.getElementById('mf-params').value||'').trim():'',
+      creator:'管理员',createTime:now,updater:'管理员',updateTime:now
+    });
+    showToast('新增成功');
+  }
+  menuFiltered=[...menuData];closeMenuModal();renderMenuTable();
+}
+
+// ══ Init ══
+renderMenuTable();
+</script>
+</body>
+</html>

@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>财税业务 — 运营管理系统</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;font-size:13px;background:#f0f2f5;display:flex;height:100vh;overflow:hidden;color:#333}
+/* ── Sidebar ── */
+.sidebar{width:188px;min-width:188px;background:#1a3a5c;color:#fff;display:flex;flex-direction:column;height:100vh;overflow-y:auto;flex-shrink:0}
+.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:2px}
+.sidebar-logo{padding:14px 16px 12px;background:#143050;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.sidebar-logo .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,#4096ff,#1677ff);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.sidebar-logo .brand{font-size:14px;font-weight:600;color:#fff;line-height:1.3}
+.nav-item{display:flex;align-items:center;gap:8px;padding:11px 16px;cursor:pointer;color:rgba(255,255,255,.78);transition:all .18s;font-size:13px}
+.nav-item:hover{background:rgba(64,150,255,.18);color:#fff}
+.nav-item.active{background:rgba(64,150,255,.25);color:#fff}
+.nav-item.parent{justify-content:space-between}
+.nav-item .icon{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.nav-sub{overflow:hidden;max-height:0;transition:max-height .28s ease;background:rgba(0,0,0,.18)}
+.nav-sub.open{max-height:600px}
+.nav-sub-item{display:block;padding:9px 16px 9px 42px;color:rgba(255,255,255,.62);cursor:pointer;font-size:12px;transition:all .18s}
+.nav-sub-item:hover{color:#fff;background:rgba(64,150,255,.15)}
+.nav-sub-item.active{color:#69b1ff;background:rgba(64,150,255,.22);font-weight:500}
+.arrow{font-size:11px;transition:transform .28s;color:rgba(255,255,255,.45)}
+.arrow.open{transform:rotate(90deg)}
+/* ── Main ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{background:#fff;padding:0 16px;height:46px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e8e8e8;flex-shrink:0}
+.breadcrumb{display:flex;align-items:center;gap:5px;color:#888;font-size:12px}
+.breadcrumb .sep{color:#d9d9d9}
+.breadcrumb .cur{color:#1677ff}
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.topbar-icon{width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:50%;color:#888;font-size:14px}
+.topbar-icon:hover{background:#f0f2f5}
+.avatar{width:28px;height:28px;background:#1677ff;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;cursor:pointer;font-weight:600}
+/* ── Content ── */
+.content{flex:1;padding:12px 14px;overflow:hidden;display:flex;flex-direction:column;gap:10px}
+.card{background:#fff;border-radius:6px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+/* ── Section panels ── */
+.section{display:none;flex-direction:column;flex:1;gap:10px;min-height:0}
+.section.active{display:flex}
+/* ── Filter ── */
+.filter-row{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap}
+.field{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.field label{white-space:nowrap;color:#666;font-size:12px;flex-shrink:0}
+.fselect{height:30px;border:1px solid #d9d9d9;border-radius:4px;padding:0 8px;font-size:12px;outline:none;color:#333;background:#fff;width:160px}
+.fselect:focus{border-color:#1677ff;box-shadow:0 0 0 2px rgba(22,119,255,.1)}
+/* ── Buttons ── */
+.btn{height:30px;padding:0 14px;border:none;border-radius:4px;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:4px;transition:all .18s;white-space:nowrap}
+.btn-primary{background:#1677ff;color:#fff}
+.btn-primary:hover{background:#4096ff}
+.btn-default{background:#fff;color:#555;border:1px solid #d9d9d9}
+.btn-default:hover:not(:disabled){color:#1677ff;border-color:#1677ff}
+.btn-danger{background:#ff4d4f;color:#fff;border:1px solid #ff4d4f}
+.btn-danger:hover:not(:disabled){background:#ff7875}
+.btn-reset{background:#fff;color:#666;border:1px solid #d9d9d9}
+.btn-reset:hover{background:#f5f5f5}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+/* ── Action bar ── */
+.action-bar{display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap}
+/* ── Table ── */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;table-layout:auto}
+thead th{background:#f5f8ff;padding:9px 10px;text-align:left;font-weight:600;color:#4a5568;font-size:12px;border-bottom:2px solid #dce8ff;white-space:nowrap;position:sticky;top:0;z-index:2}
+th.col-op,td.col-op{position:sticky;right:0;z-index:3;background:#f5f8ff;box-shadow:-3px 0 6px rgba(0,0,0,.06)}
+td.col-op{background:#fff}
+tbody tr:hover td.col-op{background:#f0f6ff}
+tbody tr.selected td.col-op{background:#e6f4ff}
+tbody td{padding:8px 10px;border-bottom:1px solid #f0f3fa;color:#333;font-size:12px;vertical-align:middle}
+tbody tr:hover{background:#f0f6ff}
+tbody tr.selected{background:#e6f4ff}
+.cb{width:14px;height:14px;cursor:pointer;accent-color:#1677ff}
+.op-link{color:#1677ff;cursor:pointer;font-size:12px}
+.op-link:hover{text-decoration:underline}
+/* ── Badges ── */
+.badge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:500;white-space:nowrap}
+.badge-orange{background:#fff7e6;color:#d46b08;border:1px solid #ffd591}
+.badge-green{background:#f6ffed;color:#389e0d;border:1px solid #b7eb8f}
+.badge-blue{background:#e6f4ff;color:#1677ff;border:1px solid #91caff}
+.badge-gray{background:#f5f5f5;color:#8c8c8c;border:1px solid #d9d9d9}
+.badge-purple{background:#f9f0ff;color:#722ed1;border:1px solid #d3adf7}
+/* ── Pager ── */
+.pager{display:flex;align-items:center;gap:5px;padding-top:10px;border-top:1px solid #f0f0f0;margin-top:4px;flex-wrap:wrap}
+.pager .total{color:#666;font-size:12px;margin-right:4px}
+.pager select{height:26px;border:1px solid #d9d9d9;border-radius:4px;padding:0 4px;font-size:12px}
+.pager .pg-btn{min-width:28px;height:28px;border:1px solid #d9d9d9;background:#fff;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:#555}
+.pager .pg-btn:hover,.pager .pg-btn.active{background:#1677ff;color:#fff;border-color:#1677ff}
+.pager .pg-btn:disabled{opacity:.35;cursor:default;pointer-events:none}
+.pager .jumper{display:flex;align-items:center;gap:4px;font-size:12px;color:#666;margin-left:4px}
+.pager .jumper input{width:42px;height:26px;border:1px solid #d9d9d9;border-radius:4px;text-align:center;font-size:12px;outline:none}
+/* ── Modal ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,21,41,.5);z-index:1000;backdrop-filter:blur(2px)}
+.modal-box{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.18);z-index:1001;flex-direction:column}
+.modal-hd{padding:18px 24px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.modal-hd .modal-title{font-size:16px;font-weight:600;color:#1a3a5c}
+.modal-hd .close-btn{cursor:pointer;font-size:22px;color:#bbb;line-height:1;padding:0 3px;transition:color .2s}
+.modal-hd .close-btn:hover{color:#666}
+.modal-bd{padding:20px 24px;overflow-y:auto;flex:1}
+.modal-ft{padding:14px 24px;border-top:1px solid #f0f0f0;display:flex;gap:10px;justify-content:flex-end;flex-shrink:0;background:#fafbfc}
+/* ── Form ── */
+.form-grid{display:grid;grid-template-columns:1fr;gap:16px}
+.form-grid.two{grid-template-columns:1fr 1fr}
+.form-item{display:flex;flex-direction:column;gap:6px}
+.form-item label{font-size:12px;color:#555;font-weight:500}
+.form-item label .req{color:#ff4d4f;margin-right:2px}
+.form-item input,.form-item select{border:1px solid #d9d9d9;border-radius:4px;padding:7px 11px;font-size:12px;outline:none;width:100%;background:#fff;color:#333;transition:border-color .2s,box-shadow .2s}
+.form-item input:focus,.form-item select:focus{border-color:#1677ff;box-shadow:0 0 0 2px rgba(22,119,255,.1)}
+.form-item input[readonly]{background:#f5f5f5;color:#999;cursor:not-allowed}
+.form-item .radio-group{display:flex;gap:16px;padding:4px 0;flex-wrap:nowrap;white-space:nowrap}
+.form-item .radio-group label{display:flex;align-items:center;gap:5px;cursor:pointer;font-weight:normal;font-size:12px;white-space:nowrap}
+.form-item .radio-group input[type="radio"]{accent-color:#1677ff;cursor:pointer}
+.err-msg{color:#ff4d4f;font-size:11px;margin-top:3px;display:none}
+.err-msg.show{display:block}
+.form-item.error input,.form-item.error select{border-color:#ff4d4f}
+/* ── Section divider in modal ── */
+.sec-divider{border:none;border-top:1px solid #f0f0f0;margin:16px 0}
+.sec-label{font-size:12px;font-weight:600;color:#1a3a5c;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.sec-label::before{content:'';width:3px;height:13px;background:#1677ff;border-radius:2px;flex-shrink:0}
+/* ── Toast ── */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#fff;border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:12px 20px;z-index:3000;display:none;align-items:center;gap:10px;font-size:13px}
+.toast.show{display:flex;animation:slideDown .3s}
+.toast.success{border-color:#52c41a;background:#f6ffed}
+.toast.error{border-color:#ff4d4f;background:#fff1f0}
+.toast.warning{border-color:#faad14;background:#fffbe6}
+.toast-icon{font-size:16px}
+@keyframes slideDown{from{opacity:0;transform:translate(-50%,-20px)}to{opacity:1;transform:translate(-50%,0)}}
+/* ── Confirm ── */
+.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,21,41,.5);z-index:2500;align-items:center;justify-content:center}
+.confirm-overlay.show{display:flex}
+.confirm-box{background:#fff;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.2);width:440px;max-width:90vw}
+.confirm-hd{padding:16px 20px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600;color:#1a3a5c}
+.confirm-bd{padding:20px;font-size:13px;line-height:1.7;color:#333}
+.confirm-ft{padding:12px 20px;border-top:1px solid #f0f0f0;display:flex;gap:8px;justify-content:flex-end}
+/* ── Placeholder ── */
+.placeholder-panel{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#bbb;min-height:200px}
+/* ── Invoice software cards ── */
+.sw-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
+.sw-card{border:1.5px solid #e0e0e0;border-radius:8px;overflow:hidden;transition:border-color .2s;background:#fff}
+.sw-card-checked{border-color:#1677ff;background:#f0f6ff}
+.sw-card-hd{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;user-select:none}
+.sw-icon{font-size:18px;flex-shrink:0;width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.sw-name{font-size:13px;font-weight:500;color:#333;flex:1}
+.sw-card-bd{padding:0 14px 12px;border-top:1px solid #f0f0f0}
+.sw-desc-label{display:block;font-size:11px;color:#888;margin:8px 0 4px}
+.sw-desc{width:100%;border:1px solid #d9d9d9;border-radius:4px;padding:6px 8px;font-size:12px;resize:vertical;min-height:52px;outline:none;font-family:inherit;line-height:1.5}
+.sw-desc:focus{border-color:#1677ff;box-shadow:0 0 0 2px rgba(22,119,255,.1)}
+/* ── Auxiliary apps ── */
+.aux-grid{display:flex;flex-wrap:wrap;gap:8px;padding:2px 0 4px}
+.aux-item{display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;padding:5px 12px;border:1px solid #d9d9d9;border-radius:16px;transition:all .18s;user-select:none;color:#555}
+.aux-item:hover{border-color:#1677ff;color:#1677ff;background:#f0f6ff}
+.aux-item.checked{border-color:#1677ff;color:#1677ff;background:#e6f4ff}
+.aux-item input{accent-color:#1677ff;cursor:pointer}
+/* ── Icon upload (same as 一级菜单) ── */
+.icon-upload-area{display:flex;align-items:flex-start;gap:12px}
+.icon-prev-box{width:54px;height:54px;border:1px solid #e0e0e0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:28px;background:#f9f9f9;overflow:hidden;flex-shrink:0}
+.icon-prev-box img{width:100%;height:100%;object-fit:cover}
+/* ── NEW: Reference tab list ── */
+.ref-tab-list{display:flex;flex-wrap:wrap;gap:6px;padding:4px 0}
+.ref-tab-item{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:#fafafa;border:1px solid #f0f0f0;border-radius:6px;font-size:12px;color:#555}
+/* ── NEW: SW counter ── */
+.sw-header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sw-count-tag{font-size:12px;padding:2px 10px;border-radius:10px;border:1px solid #91caff;color:#1677ff;background:#e6f4ff}
+.sw-count-tag.full{color:#d46b08;background:#fff7e6;border-color:#ffd591}
+/* ── NEW: Aux software group ── */
+.aux-sw-group{margin-bottom:12px}
+.aux-sw-group:last-child{margin-bottom:0}
+.aux-sw-label{font-size:12px;color:#888;margin-bottom:6px;display:flex;align-items:center;gap:5px}
+</style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">运</div>
+    <div class="brand">运营管理系统</div>
+  </div>
+          <nav id="nav">
+    <div class="nav-item" onclick="location.href='index.html'"><span class="icon">🏠</span>首页</div>
+    <div class="nav-item parent" onclick="toggleNav('product')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">📦</span>产品管理</span>
+      <span class="arrow" id="arrow-product">›</span>
+    </div>
+    <div class="nav-sub" id="sub-product">
+      <div class="nav-sub-item" onclick="location.href='产品池.html'">产品池</div>
+      <div class="nav-sub-item" onclick="location.href='定价维度.html'">定价维度</div>
+      <div class="nav-sub-item" onclick="location.href='产品定价.html'">产品定价</div>
+      <div class="nav-sub-item" onclick="location.href='产品分配.html'">产品分配</div>
+      <div class="nav-sub-item">申请跨区推广</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('client')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">⚙️</span>客户端配置</span>
+      <span class="arrow" id="arrow-client">›</span>
+    </div>
+    <div class="nav-sub" id="sub-client">
+      <div class="nav-sub-item" onclick="location.href='客户端配置-一级菜单.html'">一级菜单</div>
+      <div class="nav-sub-item">工作台</div>
+      <div class="nav-sub-item active" onclick="location.href='客户端配置-财税业务.html'">财税业务</div>
+      <div class="nav-sub-item">服务培训</div>
+      <div class="nav-sub-item">应用市场</div>
+      <div class="nav-sub-item">常用工具</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('equity')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">🏢</span>权益配置</span>
+      <span class="arrow" id="arrow-equity">›</span>
+    </div>
+    <div class="nav-sub" id="sub-equity">
+      <div class="nav-sub-item" onclick="location.href='权益配置.html'">权益配置</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('salecfg')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">📄</span>销售配置</span>
+      <span class="arrow" id="arrow-salecfg">›</span>
+    </div>
+    <div class="nav-sub" id="sub-salecfg">
+      <div class="nav-sub-item">协议模板</div>
+      <div class="nav-sub-item" onclick="location.href='支付配置.html'">支付配置</div>
+      <div class="nav-sub-item">开票配置</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('sales')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">💰</span>销售中心</span>
+      <span class="arrow" id="arrow-sales">›</span>
+    </div>
+    <div class="nav-sub" id="sub-sales">
+      <div class="nav-sub-item" onclick="location.href='订单管理.html'">订单管理</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('analysis')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">📊</span>统计分析</span>
+      <span class="arrow" id="arrow-analysis">›</span>
+    </div>
+    <div class="nav-sub" id="sub-analysis">
+      <div class="nav-sub-item" onclick="location.href='一户式视图.html'">一户式视图</div>
+      <div class="nav-sub-item" onclick="location.href='活跃度分析.html'">活跃度分析</div>
+      <div class="nav-sub-item" onclick="location.href='应用分析.html'">应用分析</div>
+      <div class="nav-sub-item" onclick="location.href='销售统计.html'">销售统计</div>
+    </div>
+    <div class="nav-item"><span class="icon">👥</span>用户中心</div>
+    <div class="nav-item"><span class="icon">💬</span>消息中心</div>
+  </nav>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<div class="main">
+  <div class="topbar">
+    <div class="breadcrumb">
+      <span onclick="location.href='index.html'" style="cursor:pointer">首页</span>
+      <span class="sep">/</span>
+      <span>客户端配置</span>
+      <span class="sep">/</span>
+      <span class="cur">财税业务</span>
+    </div>
+    <div class="topbar-actions">
+      <div class="topbar-icon" title="搜索">🔍</div>
+      <div class="topbar-icon" title="帮助">❓</div>
+      <div class="topbar-icon" title="全屏">⛶</div>
+      <div class="avatar" title="管理员">管</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="section active" id="section-finance">
+      <div class="card" style="flex-shrink:0">
+        <div class="filter-row">
+          <div class="field">
+            <label>所属单位</label>
+            <select class="fselect" id="fin-f-unit">
+              <option value="">全部</option>
+              <option value="总公司">总公司</option>
+              <option value="区域公司">区域公司</option>
+              <option value="北京分公司">北京分公司</option>
+              <option value="上海分公司">上海分公司</option>
+              <option value="广州分公司">广州分公司</option>
+              <option value="成都分公司">成都分公司</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="searchFin()">🔍 搜索</button>
+          <button class="btn btn-reset" onclick="resetFinFilter()">↺ 重置</button>
+        </div>
+      </div>
+      <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;padding-bottom:0">
+        <div class="action-bar">
+          <button class="btn btn-primary" onclick="openFinModal()">＋ 新增</button>
+          <button class="btn btn-default" id="fin-btn-edit" disabled onclick="editFinSelected()">✎ 修改</button>
+          <button class="btn btn-default" id="fin-btn-enable" disabled onclick="batchFinEnable(true)">✓ 启用</button>
+          <button class="btn btn-default" id="fin-btn-disable" disabled onclick="batchFinEnable(false)">◎ 停用</button>
+        </div>
+        <div class="tbl-wrap" style="flex:1;overflow:auto">
+          <table id="fin-table">
+            <thead>
+              <tr>
+                <th style="width:36px"><input type="checkbox" class="cb" id="fin-cb-all" onchange="finToggleAll(this)"></th>
+                <th style="width:46px">序号</th>
+                <th style="min-width:90px">所属单位</th>
+                <th style="min-width:180px">页签</th>
+                <th style="width:72px;text-align:center">是否启用</th>
+                <th style="width:50px;text-align:center">顺序</th>
+                <th style="width:80px;text-align:center">出厂设置</th>
+                <th>创建人</th>
+                <th style="min-width:120px">创建时间</th>
+                <th>修改人</th>
+                <th style="min-width:120px">修改时间</th>
+                <th class="col-op" style="width:140px">操作</th>
+              </tr>
+            </thead>
+            <tbody id="fin-tbody"></tbody>
+          </table>
+        </div>
+        <div class="pager" id="fin-pager" style="padding:10px 0 12px;flex-shrink:0"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Toast ══ -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toast-icon"></span>
+  <span id="toast-msg"></span>
+</div>
+
+<!-- ══ Confirm ══ -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-hd"><span id="confirm-icon"></span><span id="confirm-title"></span></div>
+    <div class="confirm-bd" id="confirm-body"></div>
+    <div class="confirm-ft">
+      <button class="btn btn-default" onclick="closeConfirm()">取消</button>
+      <button class="btn btn-primary" id="confirm-ok-btn" onclick="confirmOk()">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 新增/修改基础属性 Modal ══ -->
+<div class="modal-overlay" id="fin-overlay" onclick="closeFinModal()"></div>
+<div class="modal-box" id="fin-modal" style="width:660px;max-width:94vw;max-height:90vh">
+  <div class="modal-hd">
+    <span class="modal-title" id="fin-modal-title">新增页签</span>
+    <span class="close-btn" onclick="closeFinModal()">×</span>
+  </div>
+  <div class="modal-bd" id="fin-modal-body"></div>
+  <div class="modal-ft">
+    <button class="btn btn-default" onclick="closeFinModal()">取消</button>
+    <button class="btn btn-primary" onclick="saveFinForm()">确定</button>
+  </div>
+</div>
+
+<!-- ══ 开票内容配置 Modal ══ -->
+<div class="modal-overlay" id="fin-content-overlay" onclick="closeFinContentModal()"></div>
+<div class="modal-box" id="fin-content-modal" style="width:700px;max-width:94vw;max-height:90vh">
+  <div class="modal-hd">
+    <span class="modal-title" id="fin-content-modal-title">开票 — 内容配置</span>
+    <span class="close-btn" onclick="closeFinContentModal()">×</span>
+  </div>
+  <div class="modal-bd" id="fin-content-body"></div>
+  <div class="modal-ft">
+    <button class="btn btn-default" onclick="closeFinContentModal()">取消</button>
+    <button class="btn btn-primary" onclick="saveFinContentForm()">保存</button>
+  </div>
+</div>
+
+<script>
+// ══ 通用工具 ══
+function nowTime(){const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;}
+function showToast(msg,type='success'){const t=document.getElementById('toast'),icon=document.getElementById('toast-icon'),m=document.getElementById('toast-msg');t.className='toast show '+type;icon.textContent=type==='success'?'✓':type==='error'?'✕':'⚠';m.textContent=msg;setTimeout(()=>t.classList.remove('show'),2800);}
+let _confirmCb=null;
+function showConfirm(title,body,icon,cb,okText='确定',okCls='btn-primary'){document.getElementById('confirm-title').textContent=title;document.getElementById('confirm-body').innerHTML=body;document.getElementById('confirm-icon').textContent=icon;const ok=document.getElementById('confirm-ok-btn');ok.textContent=okText;ok.className='btn '+okCls;_confirmCb=cb;document.getElementById('confirm-overlay').classList.add('show');}
+function closeConfirm(){document.getElementById('confirm-overlay').classList.remove('show');_confirmCb=null;}
+function confirmOk(){if(_confirmCb)_confirmCb();closeConfirm();}
+function showModal(ovId,boxId){document.getElementById(ovId).style.display='block';document.getElementById(boxId).style.display='flex';}
+function hideModal(ovId,boxId){document.getElementById(ovId).style.display='none';document.getElementById(boxId).style.display='none';}
+function renderPager(filteredArr,curPage,pageSize,pageElId,onGo,onSize){
+  const total=filteredArr.length,pages=Math.ceil(total/pageSize)||1;
+  let h=`<span class="total">共 ${total} 条</span><select onchange="(${onSize})(+this.value)">${[10,20,50].map(n=>`<option ${pageSize==n?'selected':''}>${n}条/页</option>`).join('')}</select>`;
+  h+=`<button class="pg-btn" onclick="(${onGo})(${curPage-1})" ${curPage===1?'disabled':''}>‹</button>`;
+  let arr=[];if(pages<=7){for(let i=1;i<=pages;i++)arr.push(i);}else{arr=[1];if(curPage>3)arr.push('…');for(let i=Math.max(2,curPage-1);i<=Math.min(pages-1,curPage+1);i++)arr.push(i);if(curPage<pages-2)arr.push('…');arr.push(pages);}
+  arr.forEach(p=>{h+=p==='…'?`<span style="padding:0 3px;color:#bbb">…</span>`:`<button class="pg-btn ${p===curPage?'active':''}" onclick="(${onGo})(${p})">${p}</button>`;});
+  h+=`<button class="pg-btn" onclick="(${onGo})(${curPage+1})" ${curPage===pages?'disabled':''}>›</button>`;
+  h+=`<span class="jumper">前往<input type="number" min="1" max="${pages}" onkeydown="if(event.key==='Enter')(${onGo})(+this.value)">页</span>`;
+  document.getElementById(pageElId).innerHTML=h;
+}
+function toggleNav(key){const s=document.getElementById('sub-'+key),a=document.getElementById('arrow-'+key);s.classList.toggle('open');a.classList.toggle('open');}
+
+// ════════════════════════════════════════
+// ══ 常量配置 ══
+// ════════════════════════════════════════
+const FIN_UNIT_OPTS = ['总公司','区域公司','北京分公司','上海分公司','广州分公司','成都分公司'];
+
+const TAB_TYPE_MAP = {
+  invoice:     {label:'开票',   icon:'🧾', preset:true},
+  bookkeeping: {label:'记账',   icon:'📒', preset:true},
+  declaration: {label:'申报',   icon:'📋', preset:true},
+  custom:      {label:'自定义', icon:'🔧', preset:false},
+};
+
+const INVOICE_SOFTWARE = [
+  {id:'SW1',name:'云开票',      icon:'🔶',bg:'#fff3e0',desc:'百旺数字发票全场景应用平台，支持增值税、电子发票等全类型开具，兼容主流税控设备。',auxApps:['扫码开票','发票查验','电子档案']},
+  {id:'SW2',name:'开票宝',      icon:'🔷',bg:'#e3f2fd',desc:'航天信息旗下专业开票解决方案，税控权威，全国 1200 万+ 企业广泛覆盖，稳定可靠。',auxApps:['增值税申报助手','票据核验中心','电子发票归档']},
+  {id:'SW3',name:'云票务',      icon:'🟣',bg:'#f3e5f5',desc:'诺诺网全场景票务平台，支持发票开具、查验、流转全链路管理，接入方式灵活多样。',auxApps:['桌牌码管理','发票流转追踪','对账单']},
+  {id:'SW4',name:'云税务',      icon:'🟢',bg:'#e8f5e9',desc:'税友软件云端税务管理平台，智能化核税与进销存一体化，适合中大型企业场景。',    auxApps:['智能核税助手','进销存对接','电子档案']},
+];
+const MAX_SW = 2;
+
+// ════════════════════════════════════════
+// ══ Mock 数据 ══
+// ════════════════════════════════════════
+const finData = [
+  // 总公司
+  {id:'FT001',unit:'总公司',tabName:'开票',tabType:'invoice',icon:'🧾',enabled:true, sort:1,preset:true, link:'',apiUrl:'',customParams:'',creator:'管理员',createTime:'2025-01-10 08:00:00',updater:'管理员',updateTime:'2025-01-10 08:00:00',invoiceConfig:{selectedSw:['SW1','SW2'],selectedAux:['扫码开票','增值税申报助手'],swDescs:{SW1:'百旺数字发票全场景应用平台，支持增值税、电子发票等全类型开具，兼容主流税控设备。',SW2:'航天信息旗下专业开票解决方案，税控权威，全国 1200 万+ 企业广泛覆盖，稳定可靠。'}}},
+  {id:'FT002',unit:'总公司',tabName:'记账',tabType:'bookkeeping',icon:'📒',enabled:true, sort:2,preset:true, link:'',apiUrl:'',customParams:'',creator:'管理员',createTime:'2025-01-10 08:00:00',updater:'管理员',    updateTime:'2025-01-10 08:00:00',invoiceConfig:null},
+  {id:'FT003',unit:'总公司',tabName:'申报',tabType:'declaration',icon:'📋',enabled:true, sort:3,preset:true, link:'',apiUrl:'',customParams:'',creator:'管理员',createTime:'2025-01-10 08:00:00',updater:'管理员',    updateTime:'2025-01-10 08:00:00',invoiceConfig:null},
+  // 区域公司
+  {id:'FT004',unit:'区域公司',tabName:'开票',tabType:'invoice',icon:'🧾',enabled:true, sort:1,preset:true, link:'',apiUrl:'',customParams:'',creator:'管理员',createTime:'2025-01-10 08:00:00',updater:'张某',updateTime:'2025-03-12 10:20:00',invoiceConfig:{selectedSw:['SW1'],selectedAux:['扫码开票'],swDescs:{SW1:'百旺数字发票全场景应用平台，支持增值税、电子发票等全类型开具，兼容主流税控设备。'}}},
+  {id:'FT005',unit:'区域公司',tabName:'记账',tabType:'bookkeeping',icon:'📒',enabled:false,sort:2,preset:true, link:'',apiUrl:'',customParams:'',creator:'管理员',createTime:'2025-01-10 08:00:00',updater:'张某',updateTime:'2025-03-12 10:20:00',invoiceConfig:null},
+  {id:'FT006',unit:'区域公司',tabName:'申报',tabType:'declaration',icon:'📋',enabled:true, sort:3,preset:true, link:'',apiUrl:'',customParams:'',creator:'管理员',createTime:'2025-01-10 08:00:00',updater:'张某',updateTime:'2025-03-12 10:20:00',invoiceConfig:null},
+  {id:'FT007',unit:'区域公司',tabName:'财税资讯',tabType:'custom',icon:'📰',enabled:true, sort:4,preset:false,link:'https://caishui.example.com/news',apiUrl:'',customParams:'',creator:'张某',createTime:'2025-03-12 10:20:00',updater:'张某',updateTime:'2025-03-12 10:20:00',invoiceConfig:null},
+  // 北京分公司
+  {id:'FT008',unit:'北京分公司',tabName:'开票',tabType:'invoice',icon:'🧾',enabled:true, sort:1,preset:true, link:'',apiUrl:'',customParams:'',creator:'管理员',createTime:'2025-01-10 08:00:00',updater:'李某',updateTime:'2025-04-08 15:30:00',invoiceConfig:{selectedSw:['SW2','SW3'],selectedAux:['增值税申报助手','桌牌码管理'],swDescs:{SW2:'航天信息旗下专业开票解决方案，税控权威，全国 1200 万+ 企业广泛覆盖，稳定可靠。',SW3:'诺诺网全场景票务平台，支持发票开具、查验、流转全链路管理，接入方式灵活多样。'}}},
+  {id:'FT009',unit:'北京分公司',tabName:'记账',tabType:'bookkeeping',icon:'📒',enabled:true, sort:2,preset:true, link:'',apiUrl:'',customParams:'',creator:'管理员',createTime:'2025-01-10 08:00:00',updater:'李某',updateTime:'2025-04-08 15:30:00',invoiceConfig:null},
+  {id:'FT010',unit:'北京分公司',tabName:'申报',tabType:'declaration',icon:'📋',enabled:false,sort:3,preset:true, link:'',apiUrl:'',customParams:'',creator:'管理员',createTime:'2025-01-10 08:00:00',updater:'李某',updateTime:'2025-04-08 15:30:00',invoiceConfig:null},
+  {id:'FT011',unit:'北京分公司',tabName:'京税助手',tabType:'custom',icon:'🏛️',enabled:true, sort:4,preset:false,link:'https://bj.caishui.example.com',apiUrl:'https://api.bj.example.com/tax',customParams:'region=BJ',creator:'李某',createTime:'2025-04-08 15:30:00',updater:'李某',updateTime:'2025-04-08 15:30:00',invoiceConfig:null},
+  // 上海分公司
+  {id:'FT012',unit:'上海分公司',tabName:'开票',tabType:'invoice',icon:'🧾',enabled:true, sort:1,preset:true, link:'',apiUrl:'',customParams:'',creator:'管理员',createTime:'2025-01-10 08:00:00',updater:'王某',updateTime:'2025-05-20 09:00:00',invoiceConfig:{selectedSw:['SW1','SW4'],selectedAux:['发票查验','进销存对接'],swDescs:{SW1:'百旺数字发票全场景应用平台，支持增值税、电子发票等全类型开具，兼容主流税控设备。',SW4:'税友软件云端税务管理平台，智能化核税与进销存一体化，适合中大型企业场景。'}}},
+  {id:'FT013',unit:'上海分公司',tabName:'记账',tabType:'bookkeeping',icon:'📒',enabled:true, sort:2,preset:true, link:'',apiUrl:'',customParams:'',creator:'管理员',createTime:'2025-01-10 08:00:00',updater:'王某',updateTime:'2025-05-20 09:00:00',invoiceConfig:null},
+  {id:'FT014',unit:'上海分公司',tabName:'申报',tabType:'declaration',icon:'📋',enabled:true, sort:3,preset:true, link:'',apiUrl:'',customParams:'',creator:'管理员',createTime:'2025-01-10 08:00:00',updater:'王某',updateTime:'2025-05-20 09:00:00',invoiceConfig:null},
+  {id:'FT015',unit:'上海分公司',tabName:'沪税通',tabType:'custom',icon:'🌆',enabled:true, sort:4,preset:false,link:'https://sh.caishui.example.com',apiUrl:'https://api.sh.example.com/tax',customParams:'city=SH&ver=2',creator:'王某',createTime:'2025-05-20 09:00:00',updater:'王某',updateTime:'2025-06-15 14:00:00',invoiceConfig:null},
+  // 广州分公司
+  {id:'FT016',unit:'广州分公司',tabName:'开票',tabType:'invoice',icon:'🧾',enabled:true, sort:1,preset:true, link:'',apiUrl:'',customParams:'',creator:'管理员',createTime:'2025-01-10 08:00:00',updater:'陈某',updateTime:'2025-06-01 11:00:00',invoiceConfig:{selectedSw:['SW3'],selectedAux:['桌牌码管理'],swDescs:{SW3:'诺诺网全场景票务平台，支持发票开具、查验、流转全链路管理，接入方式灵活多样。'}}},
+  {id:'FT017',unit:'广州分公司',tabName:'记账',tabType:'bookkeeping',icon:'📒',enabled:true, sort:2,preset:true, link:'',apiUrl:'',customParams:'',creator:'管理员',createTime:'2025-01-10 08:00:00',updater:'陈某',updateTime:'2025-06-01 11:00:00',invoiceConfig:null},
+  {id:'FT018',unit:'广州分公司',tabName:'申报',tabType:'declaration',icon:'📋',enabled:true, sort:3,preset:true, link:'',apiUrl:'',customParams:'',creator:'管理员',createTime:'2025-01-10 08:00:00',updater:'陈某',updateTime:'2025-06-01 11:00:00',invoiceConfig:null},
+  // 成都分公司
+  {id:'FT019',unit:'成都分公司',tabName:'开票',tabType:'invoice',icon:'🧾',enabled:false,sort:1,preset:true, link:'',apiUrl:'',customParams:'',creator:'管理员',createTime:'2025-01-10 08:00:00',updater:'赵某',updateTime:'2025-06-20 16:00:00',invoiceConfig:{selectedSw:['SW2'],selectedAux:['电子发票归档'],swDescs:{SW2:'航天信息旗下专业开票解决方案，税控权威，全国 1200 万+ 企业广泛覆盖，稳定可靠。'}}},
+  {id:'FT020',unit:'成都分公司',tabName:'记账',tabType:'bookkeeping',icon:'📒',enabled:true, sort:2,preset:true, link:'',apiUrl:'',customParams:'',creator:'管理员',createTime:'2025-01-10 08:00:00',updater:'赵某',updateTime:'2025-06-20 16:00:00',invoiceConfig:null},
+  {id:'FT021',unit:'成都分公司',tabName:'申报',tabType:'declaration',icon:'📋',enabled:true, sort:3,preset:true, link:'',apiUrl:'',customParams:'',creator:'管理员',createTime:'2025-01-10 08:00:00',updater:'赵某',updateTime:'2025-06-20 16:00:00',invoiceConfig:null},
+  {id:'FT022',unit:'成都分公司',tabName:'川税云助',tabType:'custom',icon:'🌿',enabled:true, sort:4,preset:false,link:'https://cd.caishui.example.com',apiUrl:'',customParams:'',creator:'赵某',createTime:'2025-06-20 16:00:00',updater:'赵某',updateTime:'2025-07-01 09:30:00',invoiceConfig:null},
+];
+
+let finFiltered=[...finData],finSel=new Set(),finPage=1,finPageSize=10;
+
+// ════════════════════════════════════════
+// ══ 表格渲染 ══
+// ════════════════════════════════════════
+function updateFinBtns(){
+  const n=finSel.size;
+  document.getElementById('fin-btn-edit').disabled=n!==1;
+  document.getElementById('fin-btn-enable').disabled=n===0;
+  document.getElementById('fin-btn-disable').disabled=n===0;
+}
+
+function renderFinTable(){
+  const start=(finPage-1)*finPageSize,rows=finFiltered.slice(start,start+finPageSize);
+  document.getElementById('fin-tbody').innerHTML=rows.map((r,i)=>{
+    const typeInfo=TAB_TYPE_MAP[r.tabType]||{label:r.tabType,icon:'🔧'};
+    const opHtml=`<span class="op-link" onclick="openFinEditFromRow('${r.id}');event.stopPropagation()" style="margin-right:8px">修改</span><span class="op-link" onclick="openFinContentModal('${r.id}');event.stopPropagation()">内容配置</span>`;
+    return `
+    <tr class="${finSel.has(r.id)?'selected':''}" onclick="finToggleRow('${r.id}',event)" style="cursor:pointer">
+      <td><input type="checkbox" class="cb" ${finSel.has(r.id)?'checked':''} onclick="event.stopPropagation()" onchange="finToggleRow('${r.id}',event)"></td>
+      <td style="color:#999;text-align:center">${start+i+1}</td>
+      <td>${r.unit}</td>
+      <td>
+        <span style="font-size:14px;margin-right:4px">${r.icon}</span>
+        <span style="font-weight:500">${r.tabName}</span>
+        <span class="badge ${r.tabType==='custom'?'badge-orange':'badge-blue'}" style="margin-left:5px;font-size:10px">${typeInfo.label}</span>
+      </td>
+      <td style="text-align:center">${r.enabled?'<span class="badge badge-green">启用</span>':'<span class="badge badge-gray">停用</span>'}</td>
+      <td style="text-align:center;color:#666">${r.sort}</td>
+      <td style="text-align:center">${r.preset?'<span class="badge badge-purple">是</span>':'<span class="badge badge-gray">否</span>'}</td>
+      <td>${r.creator}</td>
+      <td style="color:#666;white-space:nowrap">${r.createTime}</td>
+      <td>${r.updater}</td>
+      <td style="color:#666;white-space:nowrap">${r.updateTime}</td>
+      <td class="col-op">${opHtml}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('fin-cb-all').checked=rows.length>0&&rows.every(r=>finSel.has(r.id));
+  renderPager(finFiltered,finPage,finPageSize,'fin-pager','finGoPage','finChangeSize');
+  updateFinBtns();
+}
+function finGoPage(p){const pages=Math.ceil(finFiltered.length/finPageSize)||1;if(p<1||p>pages)return;finPage=p;renderFinTable();}
+function finChangeSize(v){finPageSize=+v;finPage=1;renderFinTable();}
+function finToggleAll(cb){const start=(finPage-1)*finPageSize;finFiltered.slice(start,start+finPageSize).forEach(r=>cb.checked?finSel.add(r.id):finSel.delete(r.id));renderFinTable();}
+function finToggleRow(id,e){if(e.target.type==='checkbox'){if(e.target.checked)finSel.add(id);else finSel.delete(id);renderFinTable();return;}finSel.has(id)?finSel.delete(id):finSel.add(id);renderFinTable();}
+function searchFin(){const u=document.getElementById('fin-f-unit').value;finFiltered=finData.filter(r=>!u||r.unit===u);finPage=1;finSel.clear();renderFinTable();}
+function resetFinFilter(){document.getElementById('fin-f-unit').value='';finFiltered=[...finData];finPage=1;finSel.clear();renderFinTable();}
+function editFinSelected(){if(finSel.size!==1)return;const rec=finData.find(r=>r.id===[...finSel][0]);openFinModal(rec);}
+function openFinEditFromRow(id){const rec=finData.find(r=>r.id===id);if(rec)openFinModal(rec);}
+function batchFinEnable(val){
+  if(!finSel.size)return;
+  finFiltered.filter(r=>finSel.has(r.id)).forEach(r=>{r.enabled=val;r.updater='管理员';r.updateTime=nowTime();});
+  renderFinTable();showToast(val?'启用成功':'停用成功');
+}
+
+// ════════════════════════════════════════
+// ══ 新增/修改基础属性 Modal ══
+// ════════════════════════════════════════
+function openFinModal(editRec){
+  const isEdit=!!editRec;
+  document.getElementById('fin-modal-title').textContent=isEdit?'修改页签':'新增页签';
+  document.getElementById('fin-modal')._editId=isEdit?editRec.id:null;
+  if(isEdit){renderEditModalBody(editRec);}else{renderAddModalBody();}
+  showModal('fin-overlay','fin-modal');
+}
+function closeFinModal(){hideModal('fin-overlay','fin-modal');_finAddIconDataUrl='';_finEditIconDataUrl='';}
+
+// ── 新增：动态表单 ──
+function renderAddModalBody(){
+  const unitOpts=FIN_UNIT_OPTS.map(u=>`<option value="${u}">${u}</option>`).join('');
+  document.getElementById('fin-modal-body').innerHTML=`
+    <div class="form-grid two" style="gap:14px">
+      <div class="form-item" id="fi-unit-item">
+        <label><span class="req">*</span>所属单位</label>
+        <select id="fin-add-unit" onchange="onFinAddUnitChange()">
+          <option value="">请选择所属单位</option>${unitOpts}
+        </select>
+        <div class="err-msg" id="err-fin-unit">请选择所属单位</div>
+      </div>
+      <div class="form-item" id="fi-type-item">
+        <label><span class="req">*</span>页签类型</label>
+        <select id="fin-add-type" onchange="onFinAddTypeChange()">
+          <option value="">请选择页签类型</option>
+          <option value="invoice">开票</option>
+          <option value="bookkeeping">记账</option>
+          <option value="declaration">申报</option>
+          <option value="custom">自定义</option>
+        </select>
+        <div class="err-msg" id="err-fin-type">请选择页签类型</div>
+      </div>
+    </div>
+    <div id="fin-add-config" style="display:none"></div>
+    <div id="fin-add-ref" style="display:none"></div>`;
+}
+
+function onFinAddUnitChange(){
+  const unit=document.getElementById('fin-add-unit').value;
+  const refDiv=document.getElementById('fin-add-ref');
+  if(!unit){refDiv.style.display='none';return;}
+  const tabs=finData.filter(r=>r.unit===unit);
+  refDiv.style.display='block';
+  refDiv.innerHTML=`
+    <hr class="sec-divider" style="margin-top:14px">
+    <div class="sec-label">该区域已配置页签 <span style="font-size:11px;color:#999;font-weight:normal;margin-left:4px">仅供参考</span></div>
+    ${tabs.length?`<div class="ref-tab-list">${tabs.map(t=>`
+      <div class="ref-tab-item">
+        <span>${t.icon}</span>
+        <span style="font-weight:500">${t.tabName}</span>
+        <span class="badge ${t.tabType==='custom'?'badge-orange':'badge-blue'}" style="font-size:10px">${(TAB_TYPE_MAP[t.tabType]||{label:t.tabType}).label}</span>
+        <span class="badge ${t.enabled?'badge-green':'badge-gray'}" style="font-size:10px">${t.enabled?'启用':'停用'}</span>
+      </div>`).join('')}</div>`
+    :'<div style="color:#bbb;font-size:12px;padding:6px 0">该区域暂无已配置页签</div>'}`;
+}
+
+function onFinAddTypeChange(){
+  const type=document.getElementById('fin-add-type').value;
+  const configDiv=document.getElementById('fin-add-config');
+  if(!type){configDiv.style.display='none';return;}
+  const typeInfo=TAB_TYPE_MAP[type];
+  const defaultName=type==='custom'?'':typeInfo.label;
+  const defaultIcon=typeInfo.icon;
+  configDiv.style.display='block';
+  configDiv.innerHTML=`
+    <hr class="sec-divider">
+    <div class="sec-label">页签设置</div>
+    <div class="form-grid two" style="gap:14px">
+      <div class="form-item">
+        <label><span class="req">*</span>页签名称</label>
+        <input id="fin-add-name" value="${defaultName}" placeholder="请输入页签名称">
+        <div class="err-msg" id="err-fin-name">请输入页签名称</div>
+      </div>
+      <div class="form-item">
+        <label>图标</label>
+        <div class="icon-upload-area">
+          <div class="icon-prev-box" id="fin-add-icon-preview"><span>${defaultIcon}</span></div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <input type="file" accept="image/*" id="fin-add-icon-file" style="display:none" onchange="onFinAddIconUpload(this)">
+            <button class="btn btn-default" type="button" style="width:fit-content" onclick="document.getElementById('fin-add-icon-file').click()">上传图片</button>
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#888">
+              Emoji：<input id="fin-add-icon-emoji" value="${defaultIcon}" placeholder="🧾" style="width:52px;border:1px solid #d9d9d9;border-radius:4px;padding:3px 6px;font-size:13px;outline:none" oninput="onFinAddEmojiInput()">
+            </div>
+          </div>
+        </div>
+      </div>
+      ${type==='custom'?`
+      <div class="form-item" style="grid-column:1/-1">
+        <label>跳转链接</label>
+        <input id="fin-add-link" placeholder="https://...">
+      </div>
+      <div class="form-item" style="grid-column:1/-1">
+        <label>API 地址</label>
+        <input id="fin-add-api" placeholder="https://api.example.com/...">
+      </div>
+      <div class="form-item" style="grid-column:1/-1">
+        <label>自定义参数</label>
+        <input id="fin-add-params" placeholder="key1=value1&key2=value2">
+      </div>`:''}
+      <div class="form-item">
+        <label>顺序</label>
+        <input id="fin-add-sort" type="number" min="1" placeholder="留空自动排序">
+      </div>
+      <div class="form-item">
+        <label>是否启用</label>
+        <div class="radio-group">
+          <label><input type="radio" name="fin-add-enabled" value="1" checked> 启用</label>
+          <label><input type="radio" name="fin-add-enabled" value="0"> 停用</label>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── 编辑：静态表单 ──
+function renderEditModalBody(rec){
+  const typeInfo=TAB_TYPE_MAP[rec.tabType]||{label:rec.tabType};
+  document.getElementById('fin-modal-body').innerHTML=`
+    <div class="form-grid two" style="gap:14px">
+      <div class="form-item">
+        <label>所属单位</label>
+        <input value="${rec.unit}" readonly>
+      </div>
+      <div class="form-item">
+        <label>页签类型</label>
+        <input value="${typeInfo.label}" readonly>
+      </div>
+      <div class="form-item">
+        <label><span class="req">*</span>页签名称</label>
+        <input id="fin-e-name" value="${rec.tabName}">
+        <div class="err-msg" id="err-fin-e-name">请输入页签名称</div>
+      </div>
+      <div class="form-item">
+        <label>图标</label>
+        <div class="icon-upload-area">
+          <div class="icon-prev-box" id="fin-e-icon-preview"><span>${rec.icon}</span></div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <input type="file" accept="image/*" id="fin-e-icon-file" style="display:none" onchange="onFinEditIconUpload(this)">
+            <button class="btn btn-default" type="button" style="width:fit-content" onclick="document.getElementById('fin-e-icon-file').click()">上传图片</button>
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#888">
+              Emoji：<input id="fin-e-icon-emoji" value="${rec.icon}" placeholder="🧾" style="width:52px;border:1px solid #d9d9d9;border-radius:4px;padding:3px 6px;font-size:13px;outline:none" oninput="onFinEditEmojiInput()">
+            </div>
+          </div>
+        </div>
+      </div>
+      ${rec.tabType==='custom'?`
+      <div class="form-item" style="grid-column:1/-1">
+        <label>跳转链接</label>
+        <input id="fin-e-link" value="${rec.link||''}" placeholder="https://...">
+      </div>
+      <div class="form-item" style="grid-column:1/-1">
+        <label>API 地址</label>
+        <input id="fin-e-api" value="${rec.apiUrl||''}" placeholder="https://api.example.com/...">
+      </div>
+      <div class="form-item" style="grid-column:1/-1">
+        <label>自定义参数</label>
+        <input id="fin-e-params" value="${rec.customParams||''}" placeholder="key1=value1&key2=value2">
+      </div>`:''}
+      <div class="form-item">
+        <label>顺序</label>
+        <input id="fin-e-sort" type="number" min="0" value="${rec.sort}">
+      </div>
+      <div class="form-item">
+        <label>是否启用</label>
+        <div class="radio-group">
+          <label><input type="radio" name="fin-e-enabled" value="1" ${rec.enabled?'checked':''}> 启用</label>
+          <label><input type="radio" name="fin-e-enabled" value="0" ${!rec.enabled?'checked':''}> 停用</label>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── 图标上传/Emoji（新增） ──
+let _finAddIconDataUrl='',_finEditIconDataUrl='';
+function onFinAddIconUpload(input){const file=input.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{_finAddIconDataUrl=e.target.result;document.getElementById('fin-add-icon-preview').innerHTML=`<img src="${_finAddIconDataUrl}" alt="">`;document.getElementById('fin-add-icon-emoji').value='';};reader.readAsDataURL(file);}
+function onFinAddEmojiInput(){const v=document.getElementById('fin-add-icon-emoji').value;document.getElementById('fin-add-icon-preview').innerHTML=`<span>${v||'🧾'}</span>`;_finAddIconDataUrl='';}
+function onFinEditIconUpload(input){const file=input.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{_finEditIconDataUrl=e.target.result;document.getElementById('fin-e-icon-preview').innerHTML=`<img src="${_finEditIconDataUrl}" alt="">`;document.getElementById('fin-e-icon-emoji').value='';};reader.readAsDataURL(file);}
+function onFinEditEmojiInput(){const v=document.getElementById('fin-e-icon-emoji').value;document.getElementById('fin-e-icon-preview').innerHTML=`<span>${v||'🧾'}</span>`;_finEditIconDataUrl='';}
+
+// ── 保存 ──
+function saveFinForm(){
+  const m=document.getElementById('fin-modal');
+  const now=nowTime();
+  if(m._editId){
+    const nameEl=document.getElementById('fin-e-name');
+    const name=(nameEl.value||'').trim();
+    const errEl=document.getElementById('err-fin-e-name');
+    nameEl.closest('.form-item').classList.remove('error');errEl.classList.remove('show');
+    if(!name){nameEl.closest('.form-item').classList.add('error');errEl.classList.add('show');return;}
+    const rec=finData.find(r=>r.id===m._editId);
+    rec.tabName=name;
+    rec.icon=_finEditIconDataUrl||document.getElementById('fin-e-icon-emoji').value||rec.icon;
+    rec.iconUrl=_finEditIconDataUrl;
+    rec.sort=parseInt(document.getElementById('fin-e-sort').value)||0;
+    rec.enabled=document.querySelector('input[name="fin-e-enabled"]:checked')?.value==='1';
+    if(rec.tabType==='custom'){
+      rec.link=(document.getElementById('fin-e-link')?.value||'').trim();
+      rec.apiUrl=(document.getElementById('fin-e-api')?.value||'').trim();
+      rec.customParams=(document.getElementById('fin-e-params')?.value||'').trim();
+    }
+    rec.updater='管理员';rec.updateTime=now;
+    showToast('修改成功');
+  }else{
+    const unitEl=document.getElementById('fin-add-unit');
+    const typeEl=document.getElementById('fin-add-type');
+    const unit=unitEl.value,tabType=typeEl.value;
+    let err=false;
+    const clearItem=id=>{document.getElementById(id).closest('.form-item').classList.remove('error');document.getElementById('err-'+id.replace('fin-add-','')+'-'+id.replace('fin-add-','')).classList.remove('show');};
+    unitEl.closest('.form-item').classList.remove('error');document.getElementById('err-fin-unit').classList.remove('show');
+    typeEl.closest('.form-item').classList.remove('error');document.getElementById('err-fin-type').classList.remove('show');
+    if(!unit){unitEl.closest('.form-item').classList.add('error');document.getElementById('err-fin-unit').classList.add('show');err=true;}
+    if(!tabType){typeEl.closest('.form-item').classList.add('error');document.getElementById('err-fin-type').classList.add('show');err=true;}
+    if(err)return;
+    const nameEl=document.getElementById('fin-add-name');
+    if(!nameEl){showToast('请先选择页签类型','warning');return;}
+    const name=(nameEl.value||'').trim();
+    const errNameEl=document.getElementById('err-fin-name');
+    nameEl.closest('.form-item').classList.remove('error');errNameEl.classList.remove('show');
+    if(!name){nameEl.closest('.form-item').classList.add('error');errNameEl.classList.add('show');return;}
+    const icon=_finAddIconDataUrl||document.getElementById('fin-add-icon-emoji').value||'🧾';
+    const sortVal=parseInt(document.getElementById('fin-add-sort').value);
+    const sort=isNaN(sortVal)?finData.filter(r=>r.unit===unit).length+1:sortVal;
+    const enabled=document.querySelector('input[name="fin-add-enabled"]:checked')?.value==='1';
+    const link=tabType==='custom'?(document.getElementById('fin-add-link')?.value||'').trim():'';
+    const apiUrl=tabType==='custom'?(document.getElementById('fin-add-api')?.value||'').trim():'';
+    const customParams=tabType==='custom'?(document.getElementById('fin-add-params')?.value||'').trim():'';
+    const maxN=finData.reduce((acc,r)=>Math.max(acc,+(r.id.replace('FT',''))||0),0);
+    finData.push({
+      id:'FT'+String(maxN+1).padStart(3,'0'),
+      unit,tabName:name,tabType,icon,enabled,sort,
+      preset:(TAB_TYPE_MAP[tabType]||{}).preset||false,
+      link,apiUrl,customParams,
+      creator:'管理员',createTime:now,updater:'管理员',updateTime:now,
+      invoiceConfig:tabType==='invoice'?{selectedSw:[],selectedAux:[],swDescs:{}}:null,
+    });
+    showToast('新增成功');
+  }
+  finFiltered=[...finData];closeFinModal();renderFinTable();
+}
+
+// ════════════════════════════════════════
+// ══ 开票内容配置 Modal ══
+// ════════════════════════════════════════
+let _cwRec=null,_swState=[],_auxState=new Set();
+
+function openFinContentModal(id){
+  const rec=finData.find(r=>r.id===id);
+  if(!rec)return;
+  _cwRec=rec;
+  document.getElementById('fin-content-modal-title').textContent=`${rec.tabName} — 内容配置`;
+  document.getElementById('fin-content-modal')._editId=id;
+  // 初始化 sw 状态
+  const cfg=rec.invoiceConfig||{selectedSw:[],selectedAux:[],swDescs:{}};
+  _swState=INVOICE_SOFTWARE.map(sw=>({
+    ...sw,
+    selected:cfg.selectedSw.includes(sw.id),
+    editDesc:cfg.swDescs[sw.id]!==undefined?cfg.swDescs[sw.id]:sw.desc,
+  }));
+  _auxState=new Set(cfg.selectedAux);
+  renderInvoiceBody();
+  showModal('fin-content-overlay','fin-content-modal');
+}
+
+function renderInvoiceBody(){
+  const selCount=_swState.filter(s=>s.selected).length;
+  const swCards=_swState.map((sw,idx)=>`
+    <div class="sw-card ${sw.selected?'sw-card-checked':''}" id="swcard-${sw.id}">
+      <div class="sw-card-hd" onclick="toggleSwCard(${idx})">
+        <input type="checkbox" class="cb" ${sw.selected?'checked':''} onclick="event.stopPropagation();toggleSwCard(${idx})">
+        <span class="sw-icon" style="background:${sw.bg}">${sw.icon}</span>
+        <span class="sw-name">${sw.name}</span>
+      </div>
+      ${sw.selected?`<div class="sw-card-bd">
+        <label class="sw-desc-label">产品简介（将展示在客户端）</label>
+        <textarea class="sw-desc" id="sw-desc-${sw.id}" rows="2" placeholder="请输入产品简介...">${sw.editDesc}</textarea>
+      </div>`:''}
+    </div>`).join('');
+
+  const auxContent=_swState.some(s=>s.selected)
+    ?_swState.filter(s=>s.selected).map(sw=>`
+      <div class="aux-sw-group">
+        <div class="aux-sw-label"><span>${sw.icon}</span><span>${sw.name} 的辅助应用</span></div>
+        <div class="aux-grid">${sw.auxApps.map(a=>`
+          <label class="aux-item ${_auxState.has(a)?'checked':''}">
+            <input type="checkbox" class="cb" ${_auxState.has(a)?'checked':''} onchange="toggleAux('${a}',this)">
+            <span>${a}</span>
+          </label>`).join('')}</div>
+      </div>`).join('')
+    :'<div style="color:#bbb;font-size:12px;padding:8px 0">请先选择开票软件以加载对应辅助应用</div>';
+
+  document.getElementById('fin-content-body').innerHTML=`
+    <div class="sw-header-row">
+      <div class="sec-label" style="margin-bottom:0">开票软件 <span style="font-size:11px;color:#999;font-weight:normal;margin-left:4px">最多选择 ${MAX_SW} 个</span></div>
+      <span class="sw-count-tag ${selCount>=MAX_SW?'full':''}">${selCount} / ${MAX_SW} 已选</span>
+    </div>
+    <div class="sw-grid">${swCards}</div>
+    <hr class="sec-divider">
+    <div class="sec-label">开票辅助应用 <span style="font-size:11px;color:#999;font-weight:normal;margin-left:4px">与所选开票软件联动</span></div>
+    ${auxContent}`;
+}
+
+function toggleSwCard(idx){
+  // 先保存当前 desc 输入值
+  _swState.forEach(sw=>{const ta=document.getElementById('sw-desc-'+sw.id);if(ta)sw.editDesc=ta.value;});
+  const sw=_swState[idx];
+  if(!sw.selected){
+    if(_swState.filter(s=>s.selected).length>=MAX_SW){showToast(`最多只能选择 ${MAX_SW} 个开票软件`,'warning');return;}
+    sw.selected=true;
+  }else{
+    sw.selected=false;
+    // 移除该软件独有的辅助应用选中状态
+    const otherAux=new Set(_swState.filter(s=>s.selected).flatMap(s=>s.auxApps));
+    sw.auxApps.forEach(a=>{if(!otherAux.has(a))_auxState.delete(a);});
+  }
+  renderInvoiceBody();
+}
+
+function toggleAux(name,cb){
+  cb.checked?_auxState.add(name):_auxState.delete(name);
+  cb.closest('.aux-item').classList.toggle('checked',cb.checked);
+}
+
+function saveFinContentForm(){
+  _swState.forEach(sw=>{const ta=document.getElementById('sw-desc-'+sw.id);if(ta)sw.editDesc=ta.value.trim();});
+  const id=document.getElementById('fin-content-modal')._editId;
+  const rec=finData.find(r=>r.id===id);
+  if(rec){
+    rec.invoiceConfig={
+      selectedSw:_swState.filter(s=>s.selected).map(s=>s.id),
+      selectedAux:[..._auxState],
+      swDescs:Object.fromEntries(_swState.filter(s=>s.selected).map(s=>[s.id,s.editDesc])),
+    };
+    rec.updater='管理员';rec.updateTime=nowTime();
+    renderFinTable();
+  }
+  closeFinContentModal();showToast('保存成功');
+}
+
+function closeFinContentModal(){hideModal('fin-content-overlay','fin-content-modal');_cwRec=null;_swState=[];_auxState=new Set();}
+
+// ══ Init ══
+renderFinTable();
+</script>
+</body>
+</html>

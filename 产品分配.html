@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>产品分配 — 运营管理系统</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;font-size:13px;background:#f0f2f5;display:flex;height:100vh;overflow:hidden;color:#333}
+/* ── Sidebar ── */
+.sidebar{width:188px;min-width:188px;background:#1a3a5c;color:#fff;display:flex;flex-direction:column;height:100vh;overflow-y:auto;flex-shrink:0}
+.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:2px}
+.sidebar-logo{padding:14px 16px 12px;background:#143050;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.sidebar-logo .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,#4096ff,#1677ff);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.sidebar-logo .brand{font-size:14px;font-weight:600;color:#fff;line-height:1.3}
+.nav-item{display:flex;align-items:center;gap:8px;padding:11px 16px;cursor:pointer;color:rgba(255,255,255,.78);transition:all .18s;font-size:13px}
+.nav-item:hover{background:rgba(64,150,255,.18);color:#fff}
+.nav-item.active{background:rgba(64,150,255,.25);color:#fff}
+.nav-item.parent{justify-content:space-between}
+.nav-item .icon{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.nav-sub{overflow:hidden;max-height:0;transition:max-height .28s ease;background:rgba(0,0,0,.18)}
+.nav-sub.open{max-height:600px}
+.nav-sub-item{display:block;padding:9px 16px 9px 42px;color:rgba(255,255,255,.62);cursor:pointer;font-size:12px;transition:all .18s}
+.nav-sub-item:hover{color:#fff;background:rgba(64,150,255,.15)}
+.nav-sub-item.active{color:#69b1ff;background:rgba(64,150,255,.22);font-weight:500}
+.arrow{font-size:11px;transition:transform .28s;color:rgba(255,255,255,.45)}
+.arrow.open{transform:rotate(90deg)}
+/* ── Main ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{background:#fff;padding:0 16px;height:46px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e8e8e8;flex-shrink:0}
+.breadcrumb{display:flex;align-items:center;gap:5px;color:#888;font-size:12px}
+.breadcrumb .sep{color:#d9d9d9}
+.breadcrumb .cur{color:#1677ff}
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.topbar-icon{width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:50%;color:#888;font-size:14px}
+.topbar-icon:hover{background:#f0f2f5}
+.avatar{width:28px;height:28px;background:#1677ff;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;cursor:pointer;font-weight:600}
+.tabbar{background:#fff;border-bottom:1px solid #e8e8e8;display:flex;overflow-x:auto;flex-shrink:0;min-height:36px}
+.tabbar::-webkit-scrollbar{height:2px}
+.tab{display:flex;align-items:center;gap:5px;padding:7px 14px;cursor:pointer;border-right:1px solid #f0f0f0;white-space:nowrap;color:#777;border-bottom:2px solid transparent;flex-shrink:0;font-size:12px}
+.tab:hover{background:#fafafa;color:#333}
+.tab.active{color:#1677ff;border-bottom-color:#1677ff}
+.tab .close-x{font-size:11px;opacity:.45;margin-left:1px;line-height:1}
+.tab .close-x:hover{opacity:1;color:#f00}
+/* ── Content ── */
+.content{flex:1;padding:12px 14px;overflow:auto;display:flex;flex-direction:column;gap:10px}
+.card{background:#fff;border-radius:6px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+/* ── Filter ── */
+.filter-row{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap}
+.field{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.field label{white-space:nowrap;color:#666;font-size:12px;flex-shrink:0}
+.field input,.field select,.field .tree-trigger{height:30px;border:1px solid #d9d9d9;border-radius:4px;padding:0 8px;font-size:12px;outline:none;color:#333;background:#fff;min-width:0}
+.field input:focus,.field select:focus{border-color:#1677ff;box-shadow:0 0 0 2px rgba(22,119,255,.1)}
+.field-area{flex:0 0 auto}.field-area .tree-trigger{width:180px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:4px;user-select:none}
+.field-name input{width:150px}
+.field-pid input{width:110px}
+.field-status select{width:110px}
+/* Buttons */
+.btn{height:30px;padding:0 14px;border:none;border-radius:4px;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:4px;transition:all .18s;white-space:nowrap}
+.btn-primary{background:#1677ff;color:#fff}
+.btn-primary:hover{background:#4096ff}
+.btn-default{background:#fff;color:#555;border:1px solid #d9d9d9}
+.btn-default:hover:not(:disabled){color:#1677ff;border-color:#1677ff}
+.btn-danger{background:#ff4d4f;color:#fff;border:1px solid #ff4d4f}
+.btn-danger:hover:not(:disabled){background:#ff7875}
+.btn-reset{background:#fff;color:#666;border:1px solid #d9d9d9}
+.btn-reset:hover{background:#f5f5f5}
+.btn-success{background:#52c41a;color:#fff;border:1px solid #52c41a}
+.btn-success:hover:not(:disabled){background:#73d13d}
+.btn-warning{background:#faad14;color:#fff;border:1px solid #faad14}
+.btn-warning:hover:not(:disabled){background:#ffc53d}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+/* Action bar */
+.action-bar{display:flex;gap:8px;margin-bottom:10px;align-items:center}
+/* Table */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;table-layout:auto}
+thead th{background:#f5f8ff;padding:9px 10px;text-align:left;font-weight:600;color:#4a5568;font-size:12px;border-bottom:2px solid #dce8ff;white-space:nowrap;position:sticky;top:0;z-index:2}
+tbody td{padding:8px 10px;border-bottom:1px solid #f0f3fa;color:#333;font-size:12px;vertical-align:middle}
+tbody tr:hover{background:#f0f6ff}
+tbody tr.selected{background:#e6f4ff}
+.cb{width:14px;height:14px;cursor:pointer;accent-color:#1677ff}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500}
+.badge-on{background:#e6f4ff;color:#1677ff;border:1px solid #91caff}
+.badge-off{background:#fff7e6;color:#d46b08;border:1px solid #ffc069}
+/* Master-detail — 参考补录上报风格 */
+.master-table{width:100%;background:#fff;border-radius:4px;border:1px solid #f0f0f0;overflow:hidden}
+.master-row{display:flex;align-items:center;padding:10px 12px;border-bottom:1px solid #f0f0f0;cursor:pointer;transition:background .15s;font-size:13px;gap:8px}
+.master-row:hover{background:#fafafa}
+.master-row.expanded{background:#e6f7ff}
+.master-row.selected{background:#e6f4ff}
+.master-toggle{width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;color:rgba(0,0,0,.45);transition:transform .2s}
+.master-toggle.expanded{transform:rotate(90deg)}
+.master-name{flex:1;font-weight:500;color:rgba(0,0,0,.85);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.master-count{width:70px;flex-shrink:0;font-size:12px;color:rgba(0,0,0,.45)}
+.master-status{width:90px;flex-shrink:0}
+.master-action{width:60px;flex-shrink:0;text-align:center}
+.master-header{display:flex;align-items:center;padding:8px 12px;background:#fafafa;border-bottom:1px solid #f0f0f0;font-size:12px;font-weight:500;color:rgba(0,0,0,.85);gap:8px}
+.detail-area{display:none;background:#fafafa;border-bottom:1px solid #f0f0f0}
+.detail-area.show{display:block}
+.detail-table{width:100%;border-collapse:collapse}
+.detail-table th{background:#f5f5f5;padding:6px 8px;text-align:left;font-weight:500;color:rgba(0,0,0,.65);font-size:11px;border-bottom:1px solid #e8e8e8;white-space:nowrap}
+.detail-table td{padding:7px 8px;border-bottom:1px solid #f0f0f0;font-size:12px;color:rgba(0,0,0,.65);vertical-align:middle}
+.detail-table tr:hover td{background:#e6f7ff}
+.detail-table tr:last-child td{border-bottom:none}
+.s-tag{display:inline-flex;align-items:center;gap:4px;padding:1px 8px;border-radius:10px;font-size:11px;line-height:18px;white-space:nowrap}
+.s-tag .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.s-tag.on{background:#e6f4ff;color:#1677ff;border:1px solid #91caff}
+.s-tag.on .dot{background:#1677ff}
+.s-tag.off{background:#fff7e6;color:#d46b08;border:1px solid #ffc069}
+.s-tag.off .dot{background:#faad14}
+/* Pagination */
+.pager{display:flex;align-items:center;gap:5px;padding-top:10px;border-top:1px solid #f0f0f0;margin-top:4px;flex-wrap:wrap}
+.pager .total{color:#666;font-size:12px;margin-right:4px}
+.pager select{height:26px;border:1px solid #d9d9d9;border-radius:4px;padding:0 4px;font-size:12px}
+.pager .pg-btn{min-width:28px;height:28px;border:1px solid #d9d9d9;background:#fff;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:#555}
+.pager .pg-btn:hover,.pager .pg-btn.active{background:#1677ff;color:#fff;border-color:#1677ff}
+.pager .pg-btn:disabled{opacity:.35;cursor:default;pointer-events:none}
+.pager .jumper{display:flex;align-items:center;gap:4px;font-size:12px;color:#666;margin-left:4px}
+.pager .jumper input{width:42px;height:26px;border:1px solid #d9d9d9;border-radius:4px;text-align:center;font-size:12px;outline:none}
+/* ── Tree dropdown ── */
+.tree-popup{position:fixed;background:#fff;border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:2000;padding:6px 0;min-width:220px;max-height:320px;overflow-y:auto;display:none}
+.tree-popup.show{display:block}
+.tree-node{padding:7px 12px 7px calc(12px + var(--depth)*16px);cursor:pointer;display:flex;align-items:center;gap:5px;font-size:12px;color:#333}
+.tree-node:hover{background:#f0f6ff;color:#1677ff}
+.tree-node.has-child:hover{background:#fafafa;color:#999}
+.tree-node.selected{color:#1677ff;background:#e6f4ff}
+.tree-node .t-arrow{font-size:10px;color:#bbb;transition:transform .2s;flex-shrink:0}
+.tree-node .t-arrow.open{transform:rotate(90deg)}
+.tree-children{overflow:hidden;max-height:0;transition:max-height .2s}
+.tree-children.open{max-height:500px}
+/* ── Modal ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,21,41,.5);z-index:1000;backdrop-filter:blur(2px)}
+.modal-box{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.18);z-index:1001;flex-direction:column}
+.modal-hd{padding:14px 20px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.modal-hd .modal-title{font-size:16px;font-weight:600;color:#1a3a5c}
+.modal-hd .close-btn{cursor:pointer;font-size:22px;color:#bbb;line-height:1;padding:0 3px;transition:color .2s}
+.modal-hd .close-btn:hover{color:#666}
+.modal-bd{padding:16px 20px;overflow-y:auto;flex:1}
+.modal-ft{padding:10px 20px;border-top:1px solid #f0f0f0;display:flex;gap:10px;justify-content:flex-end;flex-shrink:0;background:#fafbfc}
+/* Assign modal layout */
+.assign-wrap{display:flex;gap:16px;height:420px}
+.assign-panel{flex:1;border:1px solid #e8e8e8;border-radius:6px;display:flex;flex-direction:column;overflow:hidden}
+.assign-panel-hd{padding:10px 12px;background:#f5f8ff;border-bottom:1px solid #e8e8e8;font-size:13px;font-weight:600;color:#4a5568}
+.assign-panel-bd{flex:1;overflow-y:auto;padding:8px}
+.assign-panel-bd .empty-tip{text-align:center;color:#bbb;font-size:12px;padding:40px 0}
+/* Product list in assign modal */
+.assign-product-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:4px;cursor:pointer;transition:background .15s}
+.assign-product-item:hover{background:#f0f6ff}
+.assign-product-item input{accent-color:#1677ff;cursor:pointer}
+.assign-product-item .p-name{font-size:12px;color:#333}
+.assign-product-item .p-id{font-size:11px;color:#999;margin-left:auto}
+/* Tree in assign modal */
+.assign-tree-node{padding:6px 10px 6px calc(10px + var(--depth)*16px);cursor:default;display:flex;align-items:center;gap:5px;font-size:12px;color:#333;border-radius:4px;transition:background .15s}
+.assign-tree-node:hover{background:#f0f6ff}
+.assign-tree-node .t-arrow{font-size:10px;color:#bbb;transition:transform .2s;flex-shrink:0;cursor:pointer}
+.assign-tree-node .t-arrow.open{transform:rotate(90deg)}
+.assign-tree-children{overflow:hidden;max-height:0;transition:max-height .2s}
+.assign-tree-children.open{max-height:500px}
+/* Toast */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#fff;border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:12px 20px;z-index:3000;display:none;align-items:center;gap:10px;font-size:13px}
+.toast.show{display:flex;animation:slideDown .3s}
+.toast.success{border-color:#52c41a;background:#f6ffed}
+.toast.error{border-color:#ff4d4f;background:#fff1f0}
+.toast.warning{border-color:#faad14;background:#fffbe6}
+.toast-icon{font-size:16px}
+@keyframes slideDown{from{opacity:0;transform:translate(-50%,-20px)}to{opacity:1;transform:translate(-50%,0)}}
+/* Confirm dialog */
+.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,21,41,.5);z-index:2500;align-items:center;justify-content:center}
+.confirm-overlay.show{display:flex}
+.confirm-box{background:#fff;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.2);width:460px;max-width:90vw}
+.confirm-hd{padding:16px 20px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600;color:#1a3a5c}
+.confirm-hd .icon{font-size:18px}
+.confirm-bd{padding:20px;font-size:13px;line-height:1.7;color:#333}
+.confirm-list{margin:10px 0;padding:10px 12px;background:#fafafa;border-radius:4px;max-height:180px;overflow-y:auto}
+.confirm-list-item{padding:4px 0;color:#666;font-size:12px}
+.confirm-ft{padding:12px 20px;border-top:1px solid #f0f0f0;display:flex;gap:8px;justify-content:flex-end}
+</style>
+</head>
+<body>
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">运</div>
+    <div class="brand">运营管理系统</div>
+  </div>
+          <nav id="nav">
+    <div class="nav-item" onclick="location.href='index.html'"><span class="icon">🏠</span>首页</div>
+    <div class="nav-item parent" onclick="toggleNav('product')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">📦</span>产品管理</span>
+      <span class="arrow" id="arrow-product">›</span>
+    </div>
+    <div class="nav-sub" id="sub-product">
+      <div class="nav-sub-item" onclick="location.href='产品池.html'">产品池</div>
+      <div class="nav-sub-item" onclick="location.href='定价维度.html'">定价维度</div>
+      <div class="nav-sub-item" onclick="location.href='产品定价.html'">产品定价</div>
+      <div class="nav-sub-item active" onclick="location.href='产品分配.html'">产品分配</div>
+      <div class="nav-sub-item">申请跨区推广</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('client')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">⚙️</span>客户端配置</span>
+      <span class="arrow" id="arrow-client">›</span>
+    </div>
+    <div class="nav-sub" id="sub-client">
+      <div class="nav-sub-item" onclick="location.href='客户端配置-一级菜单.html'">一级菜单</div>
+      <div class="nav-sub-item">工作台</div>
+      <div class="nav-sub-item" onclick="location.href='客户端配置-财税业务.html'">财税业务</div>
+      <div class="nav-sub-item">服务培训</div>
+      <div class="nav-sub-item">应用市场</div>
+      <div class="nav-sub-item">常用工具</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('equity')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">🏢</span>权益配置</span>
+      <span class="arrow" id="arrow-equity">›</span>
+    </div>
+    <div class="nav-sub" id="sub-equity">
+      <div class="nav-sub-item" onclick="location.href='权益配置.html'">权益配置</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('salecfg')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">📄</span>销售配置</span>
+      <span class="arrow" id="arrow-salecfg">›</span>
+    </div>
+    <div class="nav-sub" id="sub-salecfg">
+      <div class="nav-sub-item">协议模板</div>
+      <div class="nav-sub-item" onclick="location.href='支付配置.html'">支付配置</div>
+      <div class="nav-sub-item">开票配置</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('sales')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">💰</span>销售中心</span>
+      <span class="arrow" id="arrow-sales">›</span>
+    </div>
+    <div class="nav-sub" id="sub-sales">
+      <div class="nav-sub-item" onclick="location.href='订单管理.html'">订单管理</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('analysis')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">📊</span>统计分析</span>
+      <span class="arrow" id="arrow-analysis">›</span>
+    </div>
+    <div class="nav-sub" id="sub-analysis">
+      <div class="nav-sub-item" onclick="location.href='一户式视图.html'">一户式视图</div>
+      <div class="nav-sub-item" onclick="location.href='活跃度分析.html'">活跃度分析</div>
+      <div class="nav-sub-item" onclick="location.href='应用分析.html'">应用分析</div>
+      <div class="nav-sub-item" onclick="location.href='销售统计.html'">销售统计</div>
+    </div>
+    <div class="nav-item"><span class="icon">👥</span>用户中心</div>
+    <div class="nav-item"><span class="icon">💬</span>消息中心</div>
+  </nav>
+</aside>
+<!-- ══ MAIN ══ -->
+<div class="main">
+  <div class="topbar">
+    <div class="breadcrumb">
+      <span>首页</span><span class="sep">/</span>
+      <span>产品管理</span><span class="sep">/</span>
+      <span class="cur">产品分配</span>
+    </div>
+    <div class="topbar-actions">
+      <div class="topbar-icon" title="搜索">🔍</div>
+      <div class="topbar-icon" title="帮助">❓</div>
+      <div class="topbar-icon" title="全屏">⛶</div>
+      <div class="avatar" title="管理员">管</div>
+    </div>
+  </div>
+  <div class="tabbar" id="tabbar">
+    <div class="tab">首页</div>
+    <div class="tab active" id="tab-产品分配">产品分配 <span class="close-x" onclick="removeTab('产品分配',event)">×</span></div>
+  </div>
+  <div class="content">
+    <!-- Filter -->
+    <div class="card">
+      <div class="filter-row">
+        <div class="field field-name"><label>产品名称</label><input type="text" id="f-search-name" placeholder="请输入产品名称"></div>
+        <div class="field field-pid"><label>产品ID</label><input type="text" id="f-search-pid" placeholder="请输入产品ID"></div>
+        <div class="field field-area">
+          <label>分配区域</label>
+          <div class="tree-trigger" id="area-trigger" onclick="toggleAreaTree(event)" tabindex="0">
+            <span id="area-display" style="color:#bbb;font-size:12px">请选择分配区域</span>
+            <span style="font-size:10px;color:#bbb">▼</span>
+          </div>
+          <input type="hidden" id="area-value">
+        </div>
+        <div class="field field-status"><label>分配状态</label>
+          <select id="f-search-status"><option value="">全部</option><option value="1">已启用</option><option value="0">已停用</option></select>
+        </div>
+        <button class="btn btn-primary" onclick="searchTable()">🔍 搜索</button>
+        <button class="btn btn-reset" onclick="resetFilter()">↺ 重置</button>
+      </div>
+    </div>
+    <!-- Area tree dropdown -->
+    <div class="tree-popup" id="area-tree-popup"></div>
+    <!-- Table -->
+    <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;padding-bottom:0">
+      <div class="action-bar">
+        <button class="btn btn-primary" onclick="openAssignModal()">＋ 分配</button>
+        <button class="btn btn-danger" id="btn-del" disabled onclick="deleteSelected()">✕ 删除</button>
+        <button class="btn btn-success" id="btn-enable" disabled onclick="toggleStatusSelected(true)">✓ 启用</button>
+        <button class="btn btn-warning" id="btn-disable" disabled onclick="toggleStatusSelected(false)">✗ 停用</button>
+      </div>
+      <div class="tbl-wrap" style="flex:1;overflow:auto">
+        <div class="master-table" id="main-table">
+          <div class="master-header">
+            <div style="width:20px"><input type="checkbox" class="cb" id="cb-all" onchange="toggleAll(this)"></div>
+            <div class="master-name">产品名称</div>
+            <div class="master-count">分配记录数</div>
+            <div class="master-status">状态</div>
+            <div class="master-action">操作</div>
+          </div>
+          <div id="master-body"></div>
+        </div>
+      </div>
+      <div class="pager" id="pager" style="padding:10px 0 12px;flex-shrink:0"></div>
+    </div>
+  </div>
+</div>
+<!-- ══ Toast ══ -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toast-icon"></span>
+  <span id="toast-msg"></span>
+</div>
+<!-- ══ Confirm Dialog ══ -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-hd"><span class="icon" id="confirm-icon"></span><span id="confirm-title"></span></div>
+    <div class="confirm-bd" id="confirm-body"></div>
+    <div class="confirm-ft">
+      <button class="btn btn-default" onclick="closeConfirm()">取消</button>
+      <button class="btn btn-primary" id="confirm-ok-btn" onclick="confirmOk()">确定</button>
+    </div>
+  </div>
+</div>
+<!-- ══ ASSIGN MODAL ══ -->
+<div class="modal-overlay" id="assign-overlay" onclick="closeAssignModal()"></div>
+<div class="modal-box" id="assign-modal" style="width:720px;max-width:96vw;max-height:90vh">
+  <div class="modal-hd">
+    <span class="modal-title">产品分配</span>
+    <span class="close-btn" onclick="closeAssignModal()">×</span>
+  </div>
+  <div class="modal-bd">
+    <div class="assign-wrap">
+      <!-- Left: HQ product list -->
+      <div class="assign-panel" style="flex:1">
+        <div class="assign-panel-hd">选择总部产品（可多选）</div>
+        <div class="assign-panel-bd" id="assign-product-list"></div>
+      </div>
+      <!-- Right: target unit tree -->
+      <div class="assign-panel" style="flex:0 0 260px">
+        <div class="assign-panel-hd">选择目标单位（可多选）</div>
+        <div class="assign-panel-bd" id="assign-unit-tree"></div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-ft">
+    <button class="btn btn-default" onclick="closeAssignModal()">取消</button>
+    <button class="btn btn-primary" onclick="doAssign()">确定分配</button>
+  </div>
+</div>
+<script>
+// ══ 机构树 ══
+const orgTree=[
+  {id:'hq',name:'总公司',children:[
+    {id:'bj',name:'北京分公司',children:[
+      {id:'bj-dc',name:'东城区',children:[]},{id:'bj-xc',name:'西城区',children:[]},{id:'bj-cy',name:'朝阳区',children:[]},{id:'bj-hp',name:'海淀区',children:[]}
+    ]},
+    {id:'sh',name:'上海分公司',children:[
+      {id:'sh-hp',name:'黄浦区',children:[]},{id:'sh-jg',name:'静安区',children:[]},{id:'sh-pd',name:'浦东新区',children:[]}
+    ]},
+    {id:'gz',name:'广州分公司',children:[
+      {id:'gz-th',name:'天河区',children:[]},{id:'gz-yh',name:'越秀区',children:[]},{id:'gz-hw',name:'黄埔区',children:[]}
+    ]},
+    {id:'cd',name:'成都分公司',children:[
+      {id:'cd-jj',name:'锦江区',children:[]},{id:'cd-qt',name:'青羊区',children:[]},{id:'cd-wd',name:'武侯区',children:[]}
+    ]},
+    {id:'wh',name:'武汉分公司',children:[
+      {id:'wh-jh',name:'江汉区',children:[]},{id:'wh-wc',name:'武昌区',children:[]},{id:'wh-hk',name:'洪山区',children:[]}
+    ]}
+  ]}
+];
+const orgMap={};
+function buildOrgMap(nodes){nodes.forEach(n=>{orgMap[n.id]=n.name;if(n.children)buildOrgMap(n.children);});}
+buildOrgMap(orgTree);
+function getOrgName(id){return orgMap[id]||id;}
+function findNode(nodes,id){for(const n of nodes){if(n.id===id)return n;if(n.children){const f=findNode(n.children,id);if(f)return f;}}return null;}
+function collectUnitIds(unitId){const ids=[unitId];const node=findNode(orgTree,unitId);if(node&&node.children){node.children.forEach(c=>{ids.push(...collectUnitIds(c.id));});}return ids;}
+
+// ══ 总部产品（可分配）══
+const hqProducts=[
+  {id:'PRD002',name:'企业安全卫士'},
+  {id:'PRD004',name:'电子发票云平台'},
+  {id:'PRD006',name:'企业信用雷达'},
+  {id:'PRD009',name:'智能问答机器人'},
+  {id:'PRD012',name:'商标监控平台'},
+];
+
+// ══ 已分配记录 ══
+let assignRecords=[
+  {id:'A001',productId:'PRD002',targetUnit:'bj',assignDate:'2024-06-15',assignBy:'管理员',status:true,updater:'管理员',updateTime:'2025-03-08 14:22:00'},
+  {id:'A002',productId:'PRD004',targetUnit:'sh',assignDate:'2024-07-20',assignBy:'管理员',status:true,updater:'管理员',updateTime:'2025-04-12 09:30:00'},
+  {id:'A003',productId:'PRD006',targetUnit:'gz',assignDate:'2024-08-05',assignBy:'管理员',status:false,updater:'管理员',updateTime:'2025-05-18 16:45:00'},
+  {id:'A004',productId:'PRD009',targetUnit:'cd',assignDate:'2024-09-10',assignBy:'管理员',status:true,updater:'管理员',updateTime:'2025-06-22 11:00:00'},
+  {id:'A005',productId:'PRD012',targetUnit:'wh',assignDate:'2024-10-25',assignBy:'管理员',status:true,updater:'管理员',updateTime:'2025-07-10 08:15:00'},
+  {id:'A006',productId:'PRD002',targetUnit:'sh',assignDate:'2024-11-08',assignBy:'管理员',status:true,updater:'管理员',updateTime:'2025-07-15 13:40:00'},
+  {id:'A007',productId:'PRD004',targetUnit:'bj',assignDate:'2024-12-01',assignBy:'管理员',status:false,updater:'管理员',updateTime:'2025-07-20 10:25:00'},
+];
+
+// ══ State ══
+let currentPage=1,pageSize=10,filtered=[...assignRecords];
+let selectedMasters=new Set(); // 主行模式：选中的产品ID
+let selectedDetails=new Set(); // 从行模式：选中的分配记录ID
+let expandedMasters=new Set(); // 展开的产品ID
+
+// ══ Grouped data ══
+function getGrouped(){
+  const map=new Map();
+  filtered.forEach(r=>{if(!map.has(r.productId))map.set(r.productId,[]);map.get(r.productId).push(r);});
+  return map;
+}
+
+// ══ Render ══
+function renderTable(){
+  const grouped=getGrouped();
+  const productIds=[...grouped.keys()];
+  const start=(currentPage-1)*pageSize;
+  const pageProducts=productIds.slice(start,start+pageSize);
+
+  let html='';
+  pageProducts.forEach(pid=>{
+    const records=grouped.get(pid);
+    const product=hqProducts.find(p=>p.id===pid)||{name:pid};
+    const isExpanded=expandedMasters.has(pid);
+    const isMasterSelected=selectedMasters.has(pid);
+    const allOn=records.every(r=>r.status);
+
+    // Master row
+    html+=`<div class="master-row ${isExpanded?'expanded':''} ${isMasterSelected?'selected':''}" onclick="toggleExpand('${pid}')">
+      <div class="master-toggle ${isExpanded?'expanded':''}">&#9654;</div>
+      <div style="width:20px;flex-shrink:0"><input type="checkbox" class="cb" ${isMasterSelected?'checked':''} onclick="event.stopPropagation();toggleMasterRow('${pid}')"></div>
+      <div class="master-name">${product.name}</div>
+      <div class="master-count">${records.length} 条</div>
+      <div class="master-status">${allOn?'<span class="s-tag on"><span class="dot"></span>全部启用</span>':'<span class="s-tag off"><span class="dot"></span>部分停用</span>'}</div>
+      <div class="master-action"><span style="color:rgba(0,0,0,.25);font-size:11px">-</span></div>
+    </div>`;
+
+    // Detail area
+    html+=`<div class="detail-area ${isExpanded?'show':''}" id="detail-${pid}">`;
+    html+=`<table class="detail-table"><thead><tr>
+      <th style="width:28px"><input type="checkbox" class="cb" onclick="event.stopPropagation();toggleDetailAll('${pid}',this)"></th>
+      <th style="width:36px">序号</th>
+      <th style="width:100px">分配区域</th>
+      <th style="width:90px">分配日期</th>
+      <th style="width:70px">分配人</th>
+      <th style="width:70px">修改人</th>
+      <th style="width:130px">修改时间</th>
+      <th style="width:70px">状态</th>
+    </tr></thead><tbody>`;
+
+    records.forEach((r,i)=>{
+      const isDetailSelected=selectedDetails.has(r.id);
+      html+=`<tr class="${isDetailSelected?'selected':''}" onclick="toggleDetailRow('${r.id}')">
+        <td><input type="checkbox" class="cb" ${isDetailSelected?'checked':''} onclick="event.stopPropagation();toggleDetailRow('${r.id}')"></td>
+        <td style="text-align:center">${i+1}</td>
+        <td>${getOrgName(r.targetUnit)}</td>
+        <td>${r.assignDate}</td>
+        <td>${r.assignBy}</td>
+        <td>${r.updater||'—'}</td>
+        <td>${r.updateTime||'—'}</td>
+        <td><span class="s-tag ${r.status?'on':'off'}"><span class="dot"></span>${r.status?'启用':'停用'}</span></td>
+      </tr>`;
+    });
+
+    html+=`</tbody></table></div>`;
+  });
+
+  document.getElementById('master-body').innerHTML=html||'<div style="text-align:center;color:#bbb;padding:40px;font-size:12px">暂无数据</div>';
+
+  // Header checkbox state: all visible detail rows selected?
+  let allDetailsCount=0,selectedDetailsCount=0;
+  pageProducts.forEach(pid=>{
+    const records=grouped.get(pid);
+    if(expandedMasters.has(pid)){
+      records.forEach(r=>{allDetailsCount++;if(selectedDetails.has(r.id))selectedDetailsCount++;});
+    }
+  });
+  document.getElementById('cb-all').checked=allDetailsCount>0&&allDetailsCount===selectedDetailsCount;
+
+  renderPager(productIds.length);
+  updateBtns();
+}
+
+function renderPager(totalItems){
+  const pages=Math.ceil(totalItems/pageSize)||1;
+  let h=`<span class="total">共 ${filtered.length} 条记录，${totalItems} 个产品</span>
+    <select onchange="changePageSize(this.value)">${[10,20,50].map(n=>`<option ${pageSize==n?'selected':''}>${n}条/页</option>`).join('')}</select>`;
+  h+=`<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+  let arr=[];
+  if(pages<=7){for(let i=1;i<=pages;i++)arr.push(i);}
+  else{arr=[1];if(currentPage>3)arr.push('…');for(let i=Math.max(2,currentPage-1);i<=Math.min(pages-1,currentPage+1);i++)arr.push(i);if(currentPage<pages-2)arr.push('…');arr.push(pages);}
+  arr.forEach(p=>{h+=p==='…'?`<span style="padding:0 3px;color:#bbb">…</span>`:`<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;});
+  h+=`<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===pages?'disabled':''}>›</button>`;
+  h+=`<span class="jumper">前往<input type="number" min="1" max="${pages}" onkeydown="if(event.key==='Enter')goPage(+this.value)">页</span>`;
+  document.getElementById('pager').innerHTML=h;
+}
+function goPage(p){const pages=Math.ceil([...getGrouped().keys()].length/pageSize)||1;if(p<1||p>pages)return;currentPage=p;renderTable();}
+function changePageSize(v){pageSize=+v;currentPage=1;renderTable();}
+
+// ══ Expand / Select ══
+function toggleExpand(pid){
+  if(expandedMasters.has(pid))expandedMasters.delete(pid);else expandedMasters.add(pid);
+  renderTable();
+}
+function toggleMasterRow(pid){
+  if(selectedDetails.size>0)selectedDetails.clear();
+  if(selectedMasters.has(pid))selectedMasters.delete(pid);else selectedMasters.add(pid);
+  renderTable();
+}
+function toggleDetailRow(id){
+  if(selectedMasters.size>0)selectedMasters.clear();
+  if(selectedDetails.has(id))selectedDetails.delete(id);else selectedDetails.add(id);
+  renderTable();
+}
+function toggleDetailAll(pid,cb){
+  if(selectedMasters.size>0)selectedMasters.clear();
+  const grouped=getGrouped();
+  const records=grouped.get(pid);
+  if(cb.checked){records.forEach(r=>selectedDetails.add(r.id));}
+  else{records.forEach(r=>selectedDetails.delete(r.id));}
+  renderTable();
+}
+function toggleAll(cb){
+  const grouped=getGrouped();
+  const productIds=[...grouped.keys()];
+  const start=(currentPage-1)*pageSize;
+  const pageProducts=productIds.slice(start,start+pageSize);
+  selectedMasters.clear();
+  if(cb.checked){
+    pageProducts.forEach(pid=>{
+      if(expandedMasters.has(pid)){
+        grouped.get(pid).forEach(r=>selectedDetails.add(r.id));
+      }
+    });
+  }else{
+    selectedDetails.clear();
+  }
+  renderTable();
+}
+function updateBtns(){
+  const hasAny=selectedMasters.size>0||selectedDetails.size>0;
+  document.getElementById('btn-del').disabled=!hasAny;
+  document.getElementById('btn-enable').disabled=!hasAny;
+  document.getElementById('btn-disable').disabled=!hasAny;
+}
+
+// ══ Filter ══
+function searchTable(){
+  const name=document.getElementById('f-search-name').value.trim();
+  const pid=document.getElementById('f-search-pid').value.trim();
+  const area=document.getElementById('area-value').value.trim();
+  const status=document.getElementById('f-search-status').value;
+  filtered=assignRecords.filter(r=>{
+    const p=hqProducts.find(prod=>prod.id===r.productId)||{name:''};
+    if(name&&!p.name.includes(name))return false;
+    if(pid&&!r.productId.includes(pid.toUpperCase()))return false;
+    if(area&&r.targetUnit!==area)return false;
+    if(status!==''&&r.status!==(status==='1'))return false;
+    return true;
+  });
+  currentPage=1;selectedMasters.clear();selectedDetails.clear();renderTable();
+}
+function resetFilter(){
+  document.getElementById('f-search-name').value='';
+  document.getElementById('f-search-pid').value='';
+  document.getElementById('area-value').value='';
+  document.getElementById('area-display').textContent='请选择分配区域';
+  document.getElementById('area-display').style.color='#bbb';
+  document.getElementById('f-search-status').value='';
+  filtered=[...assignRecords];currentPage=1;selectedMasters.clear();selectedDetails.clear();renderTable();
+}
+
+// ══ Area tree dropdown (filter) ══
+let areaTreeOpen=false;
+function buildAreaTree(nodes,depth=0){
+  return nodes.map(n=>{
+    const hasChild=n.children&&n.children.length>0;
+    const isOpen=depth<1&&hasChild;
+    return `<div>
+      <div class="tree-node ${hasChild?'has-child':''}" style="--depth:${depth};${hasChild?'color:#999;cursor:default;':''}" onclick="areaTreeNodeClick('${n.id}','${n.name}',${hasChild},event)">
+        ${hasChild?`<span class="t-arrow ${isOpen?'open':''}" id="aarrow-${n.id}">›</span>`:'<span style="width:14px;flex-shrink:0"></span>'}
+        <span>${n.name}${hasChild?' (请选择下级单位)':''}</span>
+      </div>
+      ${hasChild?`<div class="tree-children ${isOpen?'open':''}" id="achildren-${n.id}">${buildAreaTree(n.children,depth+1)}</div>`:''}
+    </div>`;
+  }).join('');
+}
+function areaTreeNodeClick(id,name,hasChild,e){
+  e.stopPropagation();
+  if(hasChild){
+    const ch=document.getElementById('achildren-'+id);
+    const ar=document.getElementById('aarrow-'+id);
+    if(ch){ch.classList.toggle('open');ar&&ar.classList.toggle('open');}
+  } else {
+    document.getElementById('area-value').value=id;
+    const d=document.getElementById('area-display');
+    d.textContent=name;d.style.color='#333';
+    closeAreaTree();
+  }
+}
+function toggleAreaTree(e){
+  e.stopPropagation();
+  const popup=document.getElementById('area-tree-popup');
+  if(!popup.innerHTML){popup.innerHTML=buildAreaTree(orgTree);}
+  const trigger=document.getElementById('area-trigger');
+  const rect=trigger.getBoundingClientRect();
+  popup.style.top=(rect.bottom+4)+'px';
+  popup.style.left=rect.left+'px';
+  popup.classList.toggle('show');
+  areaTreeOpen=popup.classList.contains('show');
+}
+function closeAreaTree(){document.getElementById('area-tree-popup').classList.remove('show');areaTreeOpen=false;}
+document.addEventListener('click',e=>{if(areaTreeOpen&&!e.target.closest('#area-tree-popup')&&!e.target.closest('#area-trigger'))closeAreaTree();});
+
+// ══ Toast / Confirm ══
+function showToast(msg,type='success'){
+  const t=document.getElementById('toast');
+  const icon=document.getElementById('toast-icon');
+  const msgEl=document.getElementById('toast-msg');
+  t.className='toast show '+type;
+  icon.textContent=type==='success'?'✓':type==='error'?'✕':'⚠';
+  msgEl.textContent=msg;
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+let _confirmCallback=null;
+function showConfirm(title,body,icon,okCallback,okBtnText='确定',okBtnClass='btn-primary'){
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-body').innerHTML=body;
+  document.getElementById('confirm-icon').textContent=icon;
+  const okBtn=document.getElementById('confirm-ok-btn');
+  okBtn.textContent=okBtnText;okBtn.className='btn '+okBtnClass;
+  _confirmCallback=okCallback;
+  document.getElementById('confirm-overlay').classList.add('show');
+}
+function closeConfirm(){document.getElementById('confirm-overlay').classList.remove('show');_confirmCallback=null;}
+function confirmOk(){if(_confirmCallback)_confirmCallback();closeConfirm();}
+
+// ══ Actions ══
+function getSelectedRecords(){
+  if(selectedMasters.size>0){
+    return assignRecords.filter(r=>selectedMasters.has(r.productId));
+  }
+  return assignRecords.filter(r=>selectedDetails.has(r.id));
+}
+function deleteSelected(){
+  const targets=getSelectedRecords();
+  if(!targets.length)return;
+  const names=targets.map(r=>{
+    const p=hqProducts.find(prod=>prod.id===r.productId);
+    return (p?p.name:r.productId)+' → '+getOrgName(r.targetUnit);
+  });
+  const listHtml=`<div class="confirm-list">${names.map(n=>`<div class="confirm-list-item">• ${n}</div>`).join('')}</div>`;
+  showConfirm('确认删除',`即将删除以下 ${targets.length} 条产品分配记录：${listHtml}`,'🗑',()=>{
+    const ids=new Set(targets.map(r=>r.id));
+    assignRecords=assignRecords.filter(r=>!ids.has(r.id));
+    filtered=filtered.filter(r=>!ids.has(r.id));
+    selectedMasters.clear();selectedDetails.clear();renderTable();
+    showToast(`已删除 ${targets.length} 条分配记录`,'success');
+  },'删除','btn-danger');
+}
+function toggleStatusSelected(on){
+  const targets=getSelectedRecords();
+  if(!targets.length)return;
+  const action=on?'启用':'停用';
+  showConfirm(`确认${action}`,`即将${action} ${targets.length} 条产品分配记录。`,on?'✓':'✗',()=>{
+    const now=new Date();
+    const pad=n=>String(n).padStart(2,'0');
+    const timeStr=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const ids=new Set(targets.map(r=>r.id));
+    assignRecords.forEach(r=>{if(ids.has(r.id)){r.status=on;r.updater='管理员';r.updateTime=timeStr;}});
+    selectedMasters.clear();selectedDetails.clear();renderTable();
+    showToast(`已${action} ${targets.length} 条分配记录`,on?'success':'warning');
+  },action,on?'btn-success':'btn-warning');
+}
+
+// ══ Assign Modal ══
+let selectedTargetUnits=new Set();
+let selectedAssignProducts=new Set();
+function openAssignModal(){
+  selectedTargetUnits.clear();
+  selectedAssignProducts.clear();
+  renderAssignProductList();
+  renderAssignUnitTree();
+  showModal('assign-overlay','assign-modal');
+}
+function closeAssignModal(){selectedTargetUnits.clear();selectedAssignProducts.clear();hideModal('assign-overlay','assign-modal');}
+
+function renderAssignProductList(){
+  const listEl=document.getElementById('assign-product-list');
+  listEl.innerHTML=hqProducts.map(p=>`
+    <div class="assign-product-item" onclick="toggleAssignProduct('${p.id}')">
+      <input type="checkbox" id="ap-cb-${p.id}" ${selectedAssignProducts.has(p.id)?'checked':''} onclick="event.stopPropagation()">
+      <span class="p-name">${p.name}</span>
+      <span class="p-id">${p.id}</span>
+    </div>
+  `).join('');
+}
+function toggleAssignProduct(pid){
+  const cb=document.getElementById('ap-cb-'+pid);
+  cb.checked=!cb.checked;
+  if(cb.checked)selectedAssignProducts.add(pid);else selectedAssignProducts.delete(pid);
+}
+
+function renderAssignUnitTree(){
+  const treeEl=document.getElementById('assign-unit-tree');
+  // Collect all non-hq unit ids
+  let allUnitIds=[];
+  orgTree[0].children.forEach(n=>{allUnitIds.push(...collectUnitIds(n.id));});
+  const allSelected=allUnitIds.length>0&&allUnitIds.every(id=>selectedTargetUnits.has(id));
+  const selectAllHtml=`<div class="assign-tree-node" style="--depth:0;border-bottom:1px solid #f0f0f0;margin-bottom:4px;padding-bottom:8px">
+    <span style="width:14px;display:inline-block"></span>
+    <input type="checkbox" ${allSelected?'checked':''} onclick="event.stopPropagation();toggleSelectAllUnits(this)" style="accent-color:#1677ff;cursor:pointer;margin-right:4px">
+    <span style="font-weight:500">全选</span>
+  </div>`;
+  treeEl.innerHTML=selectAllHtml+buildAssignUnitTree(orgTree[0].children,0);
+}
+function toggleSelectAllUnits(cb){
+  const checked=cb.checked;
+  orgTree[0].children.forEach(n=>{
+    collectUnitIds(n.id).forEach(id=>{
+      if(checked)selectedTargetUnits.add(id);else selectedTargetUnits.delete(id);
+    });
+  });
+  renderAssignUnitTree();
+}
+function buildAssignUnitTree(nodes,depth){
+  return nodes.map(n=>{
+    const hasChild=n.children&&n.children.length>0;
+    const isOpen=depth<1&&hasChild;
+    const isChecked=selectedTargetUnits.has(n.id);
+    const allChildrenChecked=hasChild&&n.children.every(c=>selectedTargetUnits.has(c.id));
+    const someChildrenChecked=hasChild&&n.children.some(c=>selectedTargetUnits.has(c.id))&&!allChildrenChecked;
+    const displayChecked=isChecked||allChildrenChecked;
+    return `<div>
+      <div class="assign-tree-node" style="--depth:${depth}">
+        ${hasChild?`<span class="t-arrow ${isOpen?'open':''}" onclick="toggleAssignTreeChild('${n.id}',event)">›</span>`:'<span style="width:14px;display:inline-block"></span>'}
+        <input type="checkbox" ${displayChecked?'checked':''} ${someChildrenChecked?'data-indy="1"':''} onclick="toggleAssignUnit('${n.id}',${hasChild},event)" style="accent-color:#1677ff;cursor:pointer;margin-right:4px">
+        <span>${n.name}</span>
+      </div>
+      ${hasChild?`<div class="assign-tree-children ${isOpen?'open':''}" id="aschild-${n.id}">${buildAssignUnitTree(n.children,depth+1)}</div>`:''}
+    </div>`;
+  }).join('');
+}
+function toggleAssignTreeChild(id,e){
+  e.stopPropagation();
+  const ch=document.getElementById('aschild-'+id);
+  const ar=e.target;
+  if(ch){ch.classList.toggle('open');ar.classList.toggle('open');}
+}
+function toggleAssignUnit(unitId,hasChild,e){
+  e.stopPropagation();
+  const checked=e.target.checked;
+  const ids=collectUnitIds(unitId);
+  if(checked){ids.forEach(id=>selectedTargetUnits.add(id));}
+  else{ids.forEach(id=>selectedTargetUnits.delete(id));}
+  renderAssignUnitTree();
+}
+
+function doAssign(){
+  if(selectedAssignProducts.size===0){showToast('请至少选择一个产品','error');return;}
+  if(selectedTargetUnits.size===0){showToast('请至少选择一个目标单位','error');return;}
+  const now=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  const dateStr=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  const timeStr=`${dateStr} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  let maxN=assignRecords.reduce((m,r)=>Math.max(m,+(r.id.replace('A',''))||0),0);
+  let addCount=0;
+  selectedAssignProducts.forEach(pid=>{
+    selectedTargetUnits.forEach(unitId=>{
+      if(unitId==='hq')return; // skip HQ itself
+      const exists=assignRecords.some(r=>r.productId===pid&&r.targetUnit===unitId);
+      if(!exists){
+        maxN++;
+        assignRecords.push({
+          id:'A'+String(maxN).padStart(3,'0'),
+          productId:pid,targetUnit:unitId,assignDate:dateStr,assignBy:'管理员',
+          status:true,updater:'管理员',updateTime:timeStr
+        });
+        addCount++;
+      }
+    });
+  });
+  filtered=[...assignRecords];
+  currentPage=1;selectedMasters.clear();selectedDetails.clear();
+  renderTable();
+  closeAssignModal();
+  showToast(`成功分配 ${addCount} 条记录`,'success');
+}
+
+// ══ Modal helpers ══
+function showModal(ovId,boxId){
+  document.getElementById(ovId).style.display='block';
+  const m=document.getElementById(boxId);m.style.display='flex';
+}
+function hideModal(ovId,boxId){
+  document.getElementById(ovId).style.display='none';
+  document.getElementById(boxId).style.display='none';
+}
+
+// ══ Nav / Tabs ══
+function toggleNav(key){
+  const s=document.getElementById('sub-'+key),a=document.getElementById('arrow-'+key);
+  s.classList.toggle('open');a.classList.toggle('open');
+}
+const openTabs=['产品分配'];
+function switchTab(name){
+  if(!openTabs.includes(name)){
+    openTabs.push(name);
+    const t=document.createElement('div');
+    t.className='tab';t.id='tab-'+name;
+    t.innerHTML=`${name} <span class="close-x" onclick="removeTab('${name}',event)">×</span>`;
+    t.onclick=()=>activateTab(name);
+    document.getElementById('tabbar').appendChild(t);
+  }
+  activateTab(name);
+  document.querySelectorAll('.nav-sub-item').forEach(el=>el.classList.toggle('active',el.textContent.trim()===name));
+}
+function activateTab(name){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.id==='tab-'+name));}
+function removeTab(name,e){e&&e.stopPropagation();const t=document.getElementById('tab-'+name);if(t){t.remove();openTabs.splice(openTabs.indexOf(name),1);}}
+
+// ══ Init ══
+renderTable();
+</script>
+</body>
+</html>

@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>权益配置 — 运营管理系统</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;font-size:13px;background:#f0f2f5;display:flex;height:100vh;overflow:hidden;color:#333}
+/* ── Sidebar ── */
+.sidebar{width:188px;min-width:188px;background:#1a3a5c;color:#fff;display:flex;flex-direction:column;height:100vh;overflow-y:auto;flex-shrink:0}
+.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:2px}
+.sidebar-logo{padding:14px 16px 12px;background:#143050;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.sidebar-logo .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,#4096ff,#1677ff);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.sidebar-logo .brand{font-size:14px;font-weight:600;color:#fff;line-height:1.3}
+.nav-item{display:flex;align-items:center;gap:8px;padding:11px 16px;cursor:pointer;color:rgba(255,255,255,.78);transition:all .18s;font-size:13px}
+.nav-item:hover{background:rgba(64,150,255,.18);color:#fff}
+.nav-item.active{background:rgba(64,150,255,.25);color:#fff}
+.nav-item.parent{justify-content:space-between}
+.nav-item .icon{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.nav-sub{overflow:hidden;max-height:0;transition:max-height .28s ease;background:rgba(0,0,0,.18)}
+.nav-sub.open{max-height:600px}
+.nav-sub-item{display:block;padding:9px 16px 9px 42px;color:rgba(255,255,255,.62);cursor:pointer;font-size:12px;transition:all .18s}
+.nav-sub-item:hover{color:#fff;background:rgba(64,150,255,.15)}
+.nav-sub-item.active{color:#69b1ff;background:rgba(64,150,255,.22);font-weight:500}
+.arrow{font-size:11px;transition:transform .28s;color:rgba(255,255,255,.45)}
+.arrow.open{transform:rotate(90deg)}
+/* ── Main ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{background:#fff;padding:0 16px;height:46px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e8e8e8;flex-shrink:0}
+.breadcrumb{display:flex;align-items:center;gap:5px;color:#888;font-size:12px}
+.breadcrumb .sep{color:#d9d9d9}
+.breadcrumb .cur{color:#1677ff}
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.topbar-icon{width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:50%;color:#888;font-size:14px}
+.topbar-icon:hover{background:#f0f2f5}
+.avatar{width:28px;height:28px;background:#1677ff;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;cursor:pointer;font-weight:600}
+.tabbar{background:#fff;border-bottom:1px solid #e8e8e8;display:flex;overflow-x:auto;flex-shrink:0;min-height:36px}
+.tabbar::-webkit-scrollbar{height:2px}
+.tab{display:flex;align-items:center;gap:5px;padding:7px 14px;cursor:pointer;border-right:1px solid #f0f0f0;white-space:nowrap;color:#777;border-bottom:2px solid transparent;flex-shrink:0;font-size:12px}
+.tab:hover{background:#fafafa;color:#333}
+.tab.active{color:#1677ff;border-bottom-color:#1677ff}
+.tab .close-x{font-size:11px;opacity:.45;margin-left:1px;line-height:1}
+.tab .close-x:hover{opacity:1;color:#f00}
+/* ── Content ── */
+.content{flex:1;padding:12px 14px;overflow:auto;display:flex;flex-direction:column;gap:10px}
+.card{background:#fff;border-radius:6px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+/* ── Filter ── */
+.filter-row{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap}
+.field{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.field label{white-space:nowrap;color:#666;font-size:12px;flex-shrink:0}
+.field input,.field select,.field .tree-trigger{height:30px;border:1px solid #d9d9d9;border-radius:4px;padding:0 8px;font-size:12px;outline:none;color:#333;background:#fff;min-width:0}
+.field input:focus,.field select:focus{border-color:#1677ff;box-shadow:0 0 0 2px rgba(22,119,255,.1)}
+.field-unit{flex:0 0 auto}.field-unit .tree-trigger{width:180px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:4px;user-select:none}
+/* Buttons */
+.btn{height:30px;padding:0 14px;border:none;border-radius:4px;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:4px;transition:all .18s;white-space:nowrap}
+.btn-primary{background:#1677ff;color:#fff}
+.btn-primary:hover{background:#4096ff}
+.btn-default{background:#fff;color:#555;border:1px solid #d9d9d9}
+.btn-default:hover:not(:disabled){color:#1677ff;border-color:#1677ff}
+.btn-danger{background:#ff4d4f;color:#fff;border:1px solid #ff4d4f}
+.btn-danger:hover:not(:disabled){background:#ff7875}
+.btn-success{background:#52c41a;color:#fff;border:1px solid #52c41a}
+.btn-success:hover:not(:disabled){background:#73d13d}
+.btn-warning{background:#faad14;color:#fff;border:1px solid #faad14}
+.btn-warning:hover:not(:disabled){background:#ffc53d}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+/* Action bar */
+.action-bar{display:flex;gap:8px;margin-bottom:10px;align-items:center}
+/* Table */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;table-layout:auto}
+thead th{background:#f5f8ff;padding:9px 10px;text-align:left;font-weight:600;color:#4a5568;font-size:12px;border-bottom:2px solid #dce8ff;white-space:nowrap;position:sticky;top:0;z-index:2}
+th.col-op,td.col-op{position:sticky;right:0;z-index:3;background:#f5f8ff;box-shadow:-3px 0 6px rgba(0,0,0,.06)}
+td.col-op{background:#fff}
+tbody tr:hover td.col-op{background:#f0f6ff}
+tbody tr.selected td.col-op{background:#e6f4ff}
+tbody td{padding:8px 10px;border-bottom:1px solid #f0f3fa;color:#333;font-size:12px;vertical-align:middle}
+tbody tr:hover{background:#f0f6ff}
+tbody tr.selected{background:#e6f4ff}
+.cb{width:14px;height:14px;cursor:pointer;accent-color:#1677ff}
+.op-link{color:#1677ff;cursor:pointer;font-size:12px}
+.op-link:hover{text-decoration:underline}
+.op-link+.op-link{margin-left:8px}
+/* Status tags */
+.status-tag{display:inline-block;padding:1px 6px;border-radius:3px;font-size:11px;border:1px solid}
+.status-on{background:#f6ffed;color:#389e0d;border-color:#b7eb8f}
+.status-off{background:#fff1f0;color:#cf1322;border-color:#ffa39e}
+/* Pagination */
+.pager{display:flex;align-items:center;gap:5px;padding-top:10px;border-top:1px solid #f0f0f0;margin-top:4px;flex-wrap:wrap}
+.pager .total{color:#666;font-size:12px;margin-right:4px}
+.pager select{height:26px;border:1px solid #d9d9d9;border-radius:4px;padding:0 4px;font-size:12px}
+.pager .pg-btn{min-width:28px;height:28px;border:1px solid #d9d9d9;background:#fff;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:#555}
+.pager .pg-btn:hover,.pager .pg-btn.active{background:#1677ff;color:#fff;border-color:#1677ff}
+.pager .pg-btn:disabled{opacity:.35;cursor:default;pointer-events:none}
+.pager .jumper{display:flex;align-items:center;gap:4px;font-size:12px;color:#666;margin-left:4px}
+.pager .jumper input{width:42px;height:26px;border:1px solid #d9d9d9;border-radius:4px;text-align:center;font-size:12px;outline:none}
+/* ── Tree dropdown ── */
+.tree-popup{position:fixed;background:#fff;border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:2000;padding:6px 0;min-width:220px;max-height:320px;overflow-y:auto;display:none}
+.tree-popup.show{display:block}
+.tree-node{padding:7px 12px 7px calc(12px + var(--depth)*16px);cursor:pointer;display:flex;align-items:center;gap:5px;font-size:12px;color:#333}
+.tree-node:hover{background:#f0f6ff;color:#1677ff}
+.tree-node.has-child:hover{background:#fafafa;color:#999}
+.tree-node.selected{color:#1677ff;background:#e6f4ff}
+.tree-node .t-arrow{font-size:10px;color:#bbb;transition:transform .2s;flex-shrink:0}
+.tree-node .t-arrow.open{transform:rotate(90deg)}
+.tree-children{overflow:hidden;max-height:0;transition:max-height .2s}
+.tree-children.open{max-height:500px}
+/* ── Modal ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,21,41,.5);z-index:1000;backdrop-filter:blur(2px)}
+.modal-box{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.18);z-index:1001;flex-direction:column}
+.modal-hd{padding:18px 24px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.modal-hd .modal-title{font-size:16px;font-weight:600;color:#1a3a5c}
+.modal-hd .close-btn{cursor:pointer;font-size:22px;color:#bbb;line-height:1;padding:0 3px;transition:color .2s}
+.modal-hd .close-btn:hover{color:#666}
+.modal-bd{padding:24px;overflow-y:auto;flex:1}
+.modal-ft{padding:14px 24px;border-top:1px solid #f0f0f0;display:flex;gap:10px;justify-content:flex-end;flex-shrink:0;background:#fafbfc}
+/* Form */
+.form-grid{display:grid;grid-template-columns:1fr;gap:18px 20px}
+.form-item{display:flex;flex-direction:column;gap:6px}
+.form-item label{font-size:12px;color:#555;font-weight:500}
+.form-item label .req{color:#ff4d4f;margin-right:2px}
+.form-item input,.form-item select{border:1px solid #d9d9d9;border-radius:4px;padding:7px 11px;font-size:12px;outline:none;width:100%;background:#fff;color:#333;transition:border-color .2s,box-shadow .2s}
+.form-item input:focus,.form-item select:focus{border-color:#1677ff;box-shadow:0 0 0 2px rgba(22,119,255,.1)}
+.form-item input[readonly],.form-item select:disabled{background:#f5f5f5;color:#999;cursor:not-allowed}
+/* Inline form layout for modal */
+.form-grid.inline .form-item{display:grid;grid-template-columns:110px 1fr;gap:4px 12px;align-items:flex-start}
+.form-grid.inline .form-item label{margin-top:7px}
+/* Toast */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#fff;border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:12px 20px;z-index:3000;display:none;align-items:center;gap:10px;font-size:13px}
+.toast.show{display:flex;animation:slideDown .3s}
+.toast.success{border-color:#52c41a;background:#f6ffed}
+.toast.error{border-color:#ff4d4f;background:#fff1f0}
+.toast.warning{border-color:#faad14;background:#fffbe6}
+.toast-icon{font-size:16px}
+@keyframes slideDown{from{opacity:0;transform:translate(-50%,-20px)}to{opacity:1;transform:translate(-50%,0)}}
+/* Confirm dialog */
+.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,21,41,.5);z-index:2500;align-items:center;justify-content:center}
+.confirm-overlay.show{display:flex}
+.confirm-box{background:#fff;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.2);width:460px;max-width:90vw}
+.confirm-hd{padding:16px 20px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600;color:#1a3a5c}
+.confirm-hd .icon{font-size:18px}
+.confirm-bd{padding:20px;font-size:13px;line-height:1.7;color:#333}
+.confirm-list{margin:10px 0;padding:10px 12px;background:#fafafa;border-radius:4px;max-height:180px;overflow-y:auto}
+.confirm-list-item{padding:4px 0;color:#666;font-size:12px}
+.confirm-ft{padding:12px 20px;border-top:1px solid #f0f0f0;display:flex;gap:8px;justify-content:flex-end}
+.err-msg{color:#ff4d4f;font-size:11px;margin-top:3px;display:none}
+.err-msg.show{display:block}
+.form-item.error input,.form-item.error select{border-color:#ff4d4f}
+.form-item.error label{color:#ff4d4f}
+/* ── Config equity modal specific ── */
+.config-product-table{width:100%;border-collapse:collapse;margin-top:8px}
+.config-product-table th{background:#f5f8ff;padding:8px 10px;text-align:left;font-weight:600;color:#4a5568;font-size:12px;border-bottom:2px solid #dce8ff}
+.config-product-table td{padding:8px 10px;border-bottom:1px solid #f0f3fa;color:#333;font-size:12px;vertical-align:middle}
+.config-product-table tr:hover{background:#f0f6ff}
+.config-product-table input[type="checkbox"]{width:14px;height:14px;cursor:pointer;accent-color:#1677ff}
+.config-product-table input[type="number"]{width:70px;height:26px;border:1px solid #d9d9d9;border-radius:4px;padding:0 6px;font-size:12px;outline:none}
+.config-product-table input[type="number"]:focus{border-color:#1677ff;box-shadow:0 0 0 2px rgba(22,119,255,.1)}
+.selected-products-summary{margin-top:12px;padding:10px 12px;background:#f5f8ff;border-radius:4px;font-size:12px;color:#555;max-height:120px;overflow-y:auto}
+.selected-products-summary .sp-title{font-weight:600;color:#1a3a5c;margin-bottom:6px}
+.selected-products-summary .sp-item{display:inline-block;margin:2px 6px 2px 0;padding:2px 8px;background:#fff;border:1px solid #adc6ff;border-radius:3px;color:#2f54eb;font-size:11px}
+/* Scope confirm radio */
+.scope-options{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.scope-options label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#333;font-weight:normal}
+.scope-options input[type="radio"]{width:15px;height:15px;accent-color:#1677ff;cursor:pointer}
+</style>
+</head>
+<body>
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">运</div>
+    <div class="brand">运营管理系统</div>
+  </div>
+          <nav id="nav">
+    <div class="nav-item" onclick="location.href='index.html'"><span class="icon">🏠</span>首页</div>
+    <div class="nav-item parent" onclick="toggleNav('product')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">📦</span>产品管理</span>
+      <span class="arrow" id="arrow-product">›</span>
+    </div>
+    <div class="nav-sub" id="sub-product">
+      <div class="nav-sub-item" onclick="location.href='产品池.html'">产品池</div>
+      <div class="nav-sub-item" onclick="location.href='定价维度.html'">定价维度</div>
+      <div class="nav-sub-item" onclick="location.href='产品定价.html'">产品定价</div>
+      <div class="nav-sub-item" onclick="location.href='产品分配.html'">产品分配</div>
+      <div class="nav-sub-item">申请跨区推广</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('client')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">⚙️</span>客户端配置</span>
+      <span class="arrow" id="arrow-client">›</span>
+    </div>
+    <div class="nav-sub" id="sub-client">
+      <div class="nav-sub-item" onclick="location.href='客户端配置-一级菜单.html'">一级菜单</div>
+      <div class="nav-sub-item">工作台</div>
+      <div class="nav-sub-item" onclick="location.href='客户端配置-财税业务.html'">财税业务</div>
+      <div class="nav-sub-item">服务培训</div>
+      <div class="nav-sub-item">应用市场</div>
+      <div class="nav-sub-item">常用工具</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('equity')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">🏢</span>权益配置</span>
+      <span class="arrow" id="arrow-equity">›</span>
+    </div>
+    <div class="nav-sub" id="sub-equity">
+      <div class="nav-sub-item active" onclick="location.href='权益配置.html'">权益配置</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('salecfg')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">📄</span>销售配置</span>
+      <span class="arrow" id="arrow-salecfg">›</span>
+    </div>
+    <div class="nav-sub" id="sub-salecfg">
+      <div class="nav-sub-item">协议模板</div>
+      <div class="nav-sub-item" onclick="location.href='支付配置.html'">支付配置</div>
+      <div class="nav-sub-item">开票配置</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('sales')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">💰</span>销售中心</span>
+      <span class="arrow" id="arrow-sales">›</span>
+    </div>
+    <div class="nav-sub" id="sub-sales">
+      <div class="nav-sub-item" onclick="location.href='订单管理.html'">订单管理</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('analysis')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">📊</span>统计分析</span>
+      <span class="arrow" id="arrow-analysis">›</span>
+    </div>
+    <div class="nav-sub" id="sub-analysis">
+      <div class="nav-sub-item" onclick="location.href='一户式视图.html'">一户式视图</div>
+      <div class="nav-sub-item" onclick="location.href='活跃度分析.html'">活跃度分析</div>
+      <div class="nav-sub-item" onclick="location.href='应用分析.html'">应用分析</div>
+      <div class="nav-sub-item" onclick="location.href='销售统计.html'">销售统计</div>
+    </div>
+    <div class="nav-item"><span class="icon">👥</span>用户中心</div>
+    <div class="nav-item"><span class="icon">💬</span>消息中心</div>
+  </nav>
+</aside>
+<!-- ══ MAIN ══ -->
+<div class="main">
+  <div class="topbar">
+    <div class="breadcrumb">
+      <span>首页</span><span class="sep">/</span>
+      <span>企服权益</span><span class="sep">/</span>
+      <span class="cur">权益配置</span>
+    </div>
+    <div class="topbar-actions">
+      <div class="topbar-icon" title="搜索">🔍</div>
+      <div class="topbar-icon" title="帮助">❓</div>
+      <div class="topbar-icon" title="全屏">⛶</div>
+      <div class="avatar" title="管理员">管</div>
+    </div>
+  </div>
+  <div class="tabbar" id="tabbar">
+    <div class="tab">首页</div>
+    <div class="tab active" id="tab-权益配置">权益配置 <span class="close-x" onclick="removeTab('权益配置',event)">×</span></div>
+  </div>
+  <div class="content">
+    <!-- Filter -->
+    <div class="card">
+      <div class="filter-row">
+        <div class="field field-unit">
+          <label>所属单位</label>
+          <div class="tree-trigger" id="unit-trigger" onclick="toggleTree(event)" tabindex="0">
+            <span id="unit-display" style="color:#bbb;font-size:12px">请选择所属单位</span>
+            <span style="font-size:10px;color:#bbb">▼</span>
+          </div>
+          <input type="hidden" id="unit-value">
+        </div>
+        <div class="field">
+          <label>权益等级</label>
+          <input type="text" id="f-level" placeholder="请输入权益等级" style="width:120px">
+        </div>
+        <div class="field">
+          <label>启用标志</label>
+          <select id="f-status" style="width:100px">
+            <option value="">全部</option>
+            <option value="1">启用</option>
+            <option value="0">停用</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>有效期（月）</label>
+          <select id="f-months" style="width:120px">
+            <option value="">全部</option>
+            <option value="3">3个月</option>
+            <option value="6">6个月</option>
+            <option value="12">12个月</option>
+            <option value="24">24个月</option>
+            <option value="36">36个月</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="searchTable()">🔍 搜索</button>
+        <button class="btn btn-reset" onclick="resetFilter()">↺ 重置</button>
+      </div>
+    </div>
+    <!-- Tree dropdown -->
+    <div class="tree-popup" id="tree-popup"></div>
+    <!-- Table -->
+    <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;padding-bottom:0">
+      <div class="action-bar">
+        <button class="btn btn-primary" onclick="openFormModal()">＋ 新增</button>
+        <button class="btn btn-default" id="btn-edit" disabled onclick="editSelected()">✎ 修改</button>
+        <button class="btn btn-danger" id="btn-del" disabled onclick="deleteSelected()">✕ 删除</button>
+        <button class="btn btn-success" id="btn-enable" disabled onclick="batchEnable(1)">✓ 启用</button>
+        <button class="btn btn-warning" id="btn-disable" disabled onclick="batchEnable(0)">✗ 停用</button>
+      </div>
+      <div class="tbl-wrap" style="flex:1;overflow:auto">
+        <table id="main-table">
+          <thead>
+            <tr>
+              <th style="width:36px"><input type="checkbox" class="cb" id="cb-all" onchange="toggleAll(this)"></th>
+              <th style="width:46px">序号</th>
+              <th>权益ID</th>
+              <th>所属单位</th>
+              <th>权益等级</th>
+              <th>有效期</th>
+              <th>权益费（元）</th>
+              <th>税率</th>
+              <th>不含税金额（元）</th>
+              <th>税额（元）</th>
+              <th>权益说明</th>
+              <th>启用状态</th>
+              <th class="col-op" style="width:100px">操作</th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+      <div class="pager" id="pager" style="padding:10px 0 12px;flex-shrink:0"></div>
+    </div>
+  </div>
+</div>
+<!-- ══ Toast ══ -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toast-icon"></span>
+  <span id="toast-msg"></span>
+</div>
+<!-- ══ Confirm Dialog ══ -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-hd"><span class="icon" id="confirm-icon"></span><span id="confirm-title"></span></div>
+    <div class="confirm-bd" id="confirm-body"></div>
+    <div class="confirm-ft">
+      <button class="btn btn-default" onclick="closeConfirm()">取消</button>
+      <button class="btn btn-primary" id="confirm-ok-btn" onclick="confirmOk()">确定</button>
+    </div>
+  </div>
+</div>
+<!-- ══ ADD/EDIT MODAL ══ -->
+<div class="modal-overlay" id="form-overlay" onclick="closeFormModal()"></div>
+<div class="modal-box" id="form-modal" style="width:560px;max-width:92vw;max-height:88vh">
+  <div class="modal-hd">
+    <span class="modal-title" id="form-modal-title">新增权益配置</span>
+    <span class="close-btn" onclick="closeFormModal()">×</span>
+  </div>
+  <div class="modal-bd" id="form-body"></div>
+  <div class="modal-ft">
+    <button class="btn btn-default" onclick="closeFormModal()">取消</button>
+    <button class="btn btn-primary" onclick="saveForm()">确定</button>
+  </div>
+</div>
+<!-- ══ CONFIG EQUITY MODAL ══ -->
+<div class="modal-overlay" id="config-overlay" onclick="closeConfigModal()"></div>
+<div class="modal-box" id="config-modal" style="width:720px;max-width:95vw;max-height:88vh">
+  <div class="modal-hd">
+    <span class="modal-title" id="config-modal-title">配置权益</span>
+    <span class="close-btn" onclick="closeConfigModal()">×</span>
+  </div>
+  <div class="modal-bd" id="config-body"></div>
+  <div class="modal-ft">
+    <button class="btn btn-default" onclick="closeConfigModal()">取消</button>
+    <button class="btn btn-primary" onclick="saveConfig()">确定</button>
+  </div>
+</div>
+<!-- ══ SCOPE CONFIRM MODAL ══ -->
+<div class="modal-overlay" id="scope-overlay" style="z-index:1100"></div>
+<div class="modal-box" id="scope-modal" style="width:480px;max-width:92vw;z-index:1101">
+  <div class="modal-hd">
+    <span class="modal-title">生效范围确认</span>
+    <span class="close-btn" onclick="closeScopeModal()">×</span>
+  </div>
+  <div class="modal-bd">
+    <div style="font-size:13px;color:#333;line-height:1.7">
+      <p>本次权益修改涉及新产品，请选择生效范围：</p>
+      <div class="scope-options">
+        <label><input type="radio" name="scope" value="new" checked> 仅对新购买用户生效</label>
+        <label><input type="radio" name="scope" value="all"> 对已购买且未过期的权益用户同等生效</label>
+      </div>
+    </div>
+  </div>
+  <div class="modal-ft">
+    <button class="btn btn-default" onclick="closeScopeModal()">取消</button>
+    <button class="btn btn-primary" onclick="confirmScope()">确定</button>
+  </div>
+</div>
+<script>
+// ══ 机构树 ══
+const orgTree=[
+  {id:'hq',name:'总公司',children:[
+    {id:'bj',name:'北京分公司',children:[
+      {id:'bj-dc',name:'东城区',children:[]},{id:'bj-xc',name:'西城区',children:[]},{id:'bj-cy',name:'朝阳区',children:[]},{id:'bj-hp',name:'海淀区',children:[]}
+    ]},
+    {id:'sh',name:'上海分公司',children:[
+      {id:'sh-hp',name:'黄浦区',children:[]},{id:'sh-jg',name:'静安区',children:[]},{id:'sh-pd',name:'浦东新区',children:[]}
+    ]},
+    {id:'gz',name:'广州分公司',children:[
+      {id:'gz-th',name:'天河区',children:[]},{id:'gz-yh',name:'越秀区',children:[]},{id:'gz-hw',name:'黄埔区',children:[]}
+    ]},
+    {id:'cd',name:'成都分公司',children:[
+      {id:'cd-jj',name:'锦江区',children:[]},{id:'cd-qt',name:'青羊区',children:[]},{id:'cd-wd',name:'武侯区',children:[]}
+    ]},
+    {id:'wh',name:'武汉分公司',children:[
+      {id:'wh-jh',name:'江汉区',children:[]},{id:'wh-wc',name:'武昌区',children:[]},{id:'wh-hk',name:'洪山区',children:[]}
+    ]}
+  ]}
+];
+const orgMap={};
+function buildOrgMap(nodes){nodes.forEach(n=>{orgMap[n.id]=n.name;if(n.children)buildOrgMap(n.children);})}
+buildOrgMap(orgTree[0].children.concat([orgTree[0]]));
+
+// ══ Mock 上架产品 ══
+const shelfProducts=[
+  {id:'PRD001',name:'云端记账平台',billingType:'按年',pricingName:'标准版',dimensions:['授权时长','版本']},
+  {id:'PRD002',name:'企业安全卫士',billingType:'按量',pricingName:'基础版',dimensions:['功能模块']},
+  {id:'PRD003',name:'增值税申报助手',billingType:'按年',pricingName:'专业版',dimensions:['授权时长']},
+  {id:'PRD004',name:'电子发票云平台',billingType:'按量',pricingName:'标准版',dimensions:['发票张数']},
+  {id:'PRD005',name:'工商年报通',billingType:'按次',pricingName:'基础版',dimensions:['版本']},
+  {id:'PRD006',name:'企业信用雷达',billingType:'按年',pricingName:'旗舰版',dimensions:['授权时长','功能模块']},
+  {id:'PRD007',name:'职业技能云课堂',billingType:'按年',pricingName:'标准版',dimensions:['授权时长']},
+  {id:'PRD008',name:'社保公积金代办',billingType:'按次',pricingName:'基础版',dimensions:['版本']},
+  {id:'PRD009',name:'智能问答机器人',billingType:'按量',pricingName:'专业版',dimensions:['功能模块']},
+  {id:'PRD010',name:'人脸考勤一体机',billingType:'按年',pricingName:'标准版',dimensions:['授权时长','版本']},
+];
+
+// ══ Mock 权益配置记录 ══
+let equityRecords=[
+  {id:'EQ001',unit:'bj',level:'金牌',validMonths:12,fee:1688,taxRate:0.06,desc:'北京分公司金牌权益包，含全部产品免费使用',status:1,defaultDiscount:0,products:{PRD001:0,PRD002:0,PRD003:0,PRD004:0,PRD005:0,PRD006:0,PRD007:0,PRD008:0,PRD009:0,PRD010:0}},
+  {id:'EQ002',unit:'bj',level:'银牌',validMonths:12,fee:1288,taxRate:0.06,desc:'北京分公司银牌权益包，含核心产品免费使用',status:1,defaultDiscount:10,products:{PRD001:0,PRD003:0,PRD004:0,PRD006:0,PRD007:0}},
+  {id:'EQ003',unit:'bj',level:'铜牌',validMonths:6,fee:688,taxRate:0.06,desc:'北京分公司铜牌权益包，基础产品折扣使用',status:1,defaultDiscount:20,products:{PRD001:20,PRD003:20,PRD004:15,PRD007:20}},
+  {id:'EQ004',unit:'sh',level:'钻石',validMonths:24,fee:1688,taxRate:0.06,desc:'上海分公司钻石权益包',status:1,defaultDiscount:0,products:{PRD001:0,PRD002:0,PRD003:0,PRD004:0,PRD005:0,PRD006:0,PRD007:0,PRD008:0,PRD009:0,PRD010:0}},
+  {id:'EQ005',unit:'sh',level:'至尊VIP',validMonths:12,fee:1388,taxRate:0.06,desc:'上海分公司至尊VIP权益包',status:0,defaultDiscount:15,products:{PRD001:15,PRD003:10,PRD006:15,PRD007:10}},
+  {id:'EQ006',unit:'gz',level:'战略企业',validMonths:12,fee:1588,taxRate:0.06,desc:'广州分公司战略企业权益包',status:1,defaultDiscount:0,products:{PRD001:0,PRD002:0,PRD003:0,PRD004:0,PRD006:0,PRD007:0,PRD009:0,PRD010:0}},
+  {id:'EQ007',unit:'gz',level:'体验版',validMonths:3,fee:399,taxRate:0.06,desc:'广州分公司体验版权益包',status:1,defaultDiscount:30,products:{PRD001:30,PRD007:25}},
+  {id:'EQ008',unit:'cd',level:'高级会员',validMonths:12,fee:988,taxRate:0.06,desc:'成都分公司高级会员权益包',status:0,defaultDiscount:10,products:{PRD001:10,PRD003:10,PRD004:5,PRD006:10,PRD007:10}},
+  {id:'EQ009',unit:'wh',level:'旗舰版',validMonths:12,fee:1488,taxRate:0.06,desc:'武汉分公司旗舰版权益包',status:1,defaultDiscount:0,products:{PRD001:0,PRD002:0,PRD003:0,PRD004:0,PRD005:0,PRD006:0,PRD007:0,PRD008:0}},
+  {id:'EQ010',unit:'wh',level:'基础版',validMonths:6,fee:499,taxRate:0.06,desc:'武汉分公司基础版权益包',status:1,defaultDiscount:25,products:{PRD001:25,PRD003:20,PRD007:20}},
+];
+
+// ══ State ══
+let currentPage=1,pageSize=10,filtered=[...equityRecords],selected=new Set();
+let configTemp={defaultDiscount:0,products:{}}; // temp state for config modal
+let currentConfigId=null;
+let _confirmCallback=null;
+let _scopeCallback=null;
+
+// ══ Helpers ══
+function getOrgName(id){return orgMap[id]||id;}
+function formatMoney(n){return n.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function calcTax(fee,rate){const noTax=fee/(1+rate);return{noTax,tax:fee-noTax};}
+function nowTime(){
+  const d=new Date();const pad=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+// ══ Button state ══
+function updateBtns(){
+  const n=selected.size;
+  document.getElementById('btn-edit').disabled=n!==1;
+  document.getElementById('btn-del').disabled=n===0;
+  document.getElementById('btn-enable').disabled=n===0;
+  document.getElementById('btn-disable').disabled=n===0;
+}
+
+// ══ Render table ══
+function renderTable(){
+  const start=(currentPage-1)*pageSize;
+  const rows=filtered.slice(start,start+pageSize);
+  document.getElementById('table-body').innerHTML=rows.map((r,i)=>{
+    const t=calcTax(r.fee,r.taxRate);
+    const statusHtml=r.status===1?'<span class="status-tag status-on">启用</span>':'<span class="status-tag status-off">停用</span>';
+    return `<tr class="${selected.has(r.id)?'selected':''}" onclick="toggleRow('${r.id}',event)" style="cursor:pointer">
+      <td><input type="checkbox" class="cb" ${selected.has(r.id)?'checked':''} onclick="event.stopPropagation()" onchange="toggleRow('${r.id}',event)"></td>
+      <td style="color:#999;text-align:center">${start+i+1}</td>
+      <td style="color:#1677ff;font-weight:500">${r.id}</td>
+      <td>${getOrgName(r.unit)}</td>
+      <td>${r.level}</td>
+      <td>${r.validMonths}个月</td>
+      <td>${formatMoney(r.fee)}</td>
+      <td>${(r.taxRate*100).toFixed(0)}%</td>
+      <td>${formatMoney(t.noTax)}</td>
+      <td>${formatMoney(t.tax)}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.desc}">${r.desc}</td>
+      <td>${statusHtml}</td>
+      <td class="col-op" style="white-space:nowrap">
+        <span class="op-link" onclick="openConfigModal('${r.id}');event.stopPropagation()">配置权益</span>
+      </td>
+    </tr>`;
+  }).join('');
+  const allOnPage=filtered.slice(start,start+pageSize).every(r=>selected.has(r.id));
+  document.getElementById('cb-all').checked=allOnPage&&rows.length>0;
+  renderPager();
+  updateBtns();
+}
+
+function renderPager(){
+  const total=filtered.length,pages=Math.ceil(total/pageSize)||1;
+  let h=`<span class="total">共 ${total} 条</span>
+    <select onchange="changePageSize(this.value)">${[10,20,50].map(n=>`<option ${pageSize==n?'selected':''}>${n}条/页</option>`).join('')}</select>`;
+  h+=`<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+  let arr=[];
+  if(pages<=7){for(let i=1;i<=pages;i++)arr.push(i);}
+  else{arr=[1];if(currentPage>3)arr.push('…');for(let i=Math.max(2,currentPage-1);i<=Math.min(pages-1,currentPage+1);i++)arr.push(i);if(currentPage<pages-2)arr.push('…');arr.push(pages);}
+  arr.forEach(p=>{h+=p==='…'?`<span style="padding:0 3px;color:#bbb">…</span>`:`<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;});
+  h+=`<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===pages?'disabled':''}>›</button>`;
+  h+=`<span class="jumper">前往<input type="number" min="1" max="${pages}" onkeydown="if(event.key==='Enter')goPage(+this.value)">页</span>`;
+  document.getElementById('pager').innerHTML=h;
+}
+
+function goPage(p){const pages=Math.ceil(filtered.length/pageSize)||1;if(p<1||p>pages)return;currentPage=p;renderTable();}
+function changePageSize(v){pageSize=+v;currentPage=1;renderTable();}
+function toggleAll(cb){const start=(currentPage-1)*pageSize;filtered.slice(start,start+pageSize).forEach(r=>cb.checked?selected.add(r.id):selected.delete(r.id));renderTable();}
+function toggleRow(id,e){if(e.target.type==='checkbox'){if(e.target.checked)selected.add(id);else selected.delete(id);renderTable();return;}if(selected.has(id))selected.delete(id);else selected.add(id);renderTable();}
+
+// ══ Filter ══
+function searchTable(){
+  const unit=document.getElementById('unit-value').value.trim();
+  const level=document.getElementById('f-level').value;
+  const status=document.getElementById('f-status').value;
+  const months=document.getElementById('f-months').value;
+  filtered=equityRecords.filter(r=>{
+    if(unit&&r.unit!==unit)return false;
+    if(level&&!r.level.includes(level))return false;
+    if(status!==''&&r.status!==+status)return false;
+    if(months&&r.validMonths!==+months)return false;
+    return true;
+  });
+  currentPage=1;selected.clear();renderTable();
+}
+function resetFilter(){
+  document.getElementById('unit-value').value='';
+  document.getElementById('unit-display').textContent='请选择所属单位';
+  document.getElementById('unit-display').style.color='#bbb';
+  document.getElementById('f-level').value='';
+  document.getElementById('f-status').value='';
+  document.getElementById('f-months').value='';
+  filtered=[...equityRecords];currentPage=1;selected.clear();renderTable();
+}
+
+// ══ Actions ══
+function showToast(msg,type='success'){
+  const t=document.getElementById('toast');
+  const icon=document.getElementById('toast-icon');
+  const msgEl=document.getElementById('toast-msg');
+  t.className='toast show '+type;
+  icon.textContent=type==='success'?'✓':type==='error'?'✕':'⚠';
+  msgEl.textContent=msg;
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+function showConfirm(title,body,icon,okCallback,okBtnText='确定',okBtnClass='btn-primary'){
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-body').innerHTML=body;
+  document.getElementById('confirm-icon').textContent=icon;
+  const okBtn=document.getElementById('confirm-ok-btn');
+  okBtn.textContent=okBtnText;
+  okBtn.className='btn '+okBtnClass;
+  _confirmCallback=okCallback;
+  document.getElementById('confirm-overlay').classList.add('show');
+}
+function closeConfirm(){
+  document.getElementById('confirm-overlay').classList.remove('show');
+  _confirmCallback=null;
+}
+function confirmOk(){if(_confirmCallback)_confirmCallback();closeConfirm();}
+
+function deleteSelected(){
+  if(!selected.size)return;
+  const items=filtered.filter(r=>selected.has(r.id));
+  const listHtml=`<div class="confirm-list">${items.map(r=>`<div class="confirm-list-item">• ${r.id} (${r.level} / ${getOrgName(r.unit)})</div>`).join('')}</div>`;
+  showConfirm('确认删除',`即将删除以下 ${selected.size} 个权益配置：${listHtml}`,'🗑',()=>{
+    selected.forEach(id=>{const i=equityRecords.findIndex(r=>r.id===id);if(i>-1)equityRecords.splice(i,1);});
+    filtered=filtered.filter(r=>!selected.has(r.id));
+    selected.clear();renderTable();
+    showToast(`已删除 ${items.length} 个权益配置`,'success');
+  },'删除','btn-danger');
+}
+function editSelected(){if(selected.size!==1)return;openFormModal([...selected][0]);}
+function batchEnable(status){
+  if(!selected.size)return;
+  const action=status===1?'启用':'停用';
+  const items=filtered.filter(r=>selected.has(r.id));
+  const listHtml=`<div class="confirm-list">${items.map(r=>`<div class="confirm-list-item">• ${r.id} (${r.level} / ${getOrgName(r.unit)})</div>`).join('')}</div>`;
+  showConfirm(`确认${action}`,`即将${action}以下 ${selected.size} 个权益配置：${listHtml}`,status===1?'✓':'✗',()=>{
+    selected.forEach(id=>{const r=equityRecords.find(x=>x.id===id);if(r)r.status=status;});
+    filtered=filtered.map(r=>selected.has(r.id)?{...r,status}:r);
+    selected.clear();renderTable();
+    showToast(`已${action} ${items.length} 个权益配置`,'success');
+  });
+}
+
+// ══ Form Modal (Add/Edit) ══
+function openFormModal(editId){
+  const isEdit=!!editId;
+  const record=isEdit?equityRecords.find(r=>r.id===editId):null;
+  document.getElementById('form-modal-title').textContent=isEdit?'修改权益配置':'新增权益配置';
+
+  const unitOptions=isEdit
+    ?`<input id="ff-unit" value="${getOrgName(record.unit)}" readonly>`
+    :`<select id="ff-unit">
+        <option value="">请选择所属单位</option>
+        <option value="hq">总公司</option>
+        <option value="bj">北京分公司</option>
+        <option value="sh">上海分公司</option>
+        <option value="gz">广州分公司</option>
+        <option value="cd">成都分公司</option>
+        <option value="wh">武汉分公司</option>
+      </select>`;
+
+  const levelValue=isEdit?record.level:'';
+  const monthsValue=isEdit?record.validMonths:'';
+  const feeValue=isEdit?record.fee:'';
+  const descValue=isEdit?record.desc:'';
+  const statusValue=isEdit?record.status:1;
+
+  document.getElementById('form-body').innerHTML=`
+    <div class="form-grid inline">
+      <div class="form-item"><label><span class="req">*</span>权益ID</label>
+        <div>
+          <input id="ff-id" value="${isEdit?record.id:''}" ${isEdit?'readonly':''} placeholder="请输入权益ID">
+          <div class="err-msg" id="err-id">请输入权益ID</div>
+        </div>
+      </div>
+      <div class="form-item"><label><span class="req">*</span>所属单位</label>
+        <div>${unitOptions}<div class="err-msg" id="err-unit">请选择所属单位</div></div>
+      </div>
+      <div class="form-item"><label><span class="req">*</span>权益等级</label>
+        <div>
+          <input id="ff-level" value="${levelValue}" placeholder="请输入权益等级">
+          <div class="err-msg" id="err-level">请输入权益等级</div>
+        </div>
+      </div>
+      <div class="form-item"><label><span class="req">*</span>有效期（月）</label>
+        <div>
+          <select id="ff-months">
+            <option value="">请选择</option>
+            <option value="3" ${monthsValue===3?'selected':''}>3个月</option>
+            <option value="6" ${monthsValue===6?'selected':''}>6个月</option>
+            <option value="12" ${monthsValue===12?'selected':''}>12个月</option>
+            <option value="24" ${monthsValue===24?'selected':''}>24个月</option>
+            <option value="36" ${monthsValue===36?'selected':''}>36个月</option>
+          </select>
+          <div class="err-msg" id="err-months">请选择有效期</div>
+        </div>
+      </div>
+      <div class="form-item"><label><span class="req">*</span>权益费（元）</label>
+        <div>
+          <input id="ff-fee" type="number" min="0" step="0.01" value="${feeValue}" placeholder="请输入权益费">
+          <div class="err-msg" id="err-fee">请输入权益费</div>
+        </div>
+      </div>
+      <div class="form-item"><label><span class="req">*</span>税率</label>
+        <div>
+          <select id="ff-tax">
+            <option value="0.06" ${(isEdit&&record.taxRate===0.06)?'selected':''}>6%</option>
+            <option value="0.09" ${(isEdit&&record.taxRate===0.09)?'selected':''}>9%</option>
+            <option value="0.13" ${(isEdit&&record.taxRate===0.13)?'selected':''}>13%</option>
+            <option value="0" ${(isEdit&&record.taxRate===0)?'selected':''}>0%</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-item"><label>启用状态</label>
+        <div>
+          <select id="ff-status">
+            <option value="1" ${statusValue===1?'selected':''}>启用</option>
+            <option value="0" ${statusValue===0?'selected':''}>停用</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-item"><label>权益说明</label>
+        <div><input id="ff-desc" value="${descValue}" placeholder="请输入权益说明"></div>
+      </div>
+    </div>`;
+
+  showModal('form-overlay','form-modal');
+  document.getElementById('form-modal')._editId=editId||null;
+}
+function closeFormModal(){hideModal('form-overlay','form-modal');}
+function saveForm(){
+  document.querySelectorAll('.form-item.error').forEach(el=>el.classList.remove('error'));
+  document.querySelectorAll('.err-msg.show').forEach(el=>el.classList.remove('show'));
+
+  const idEl=document.getElementById('ff-id');
+  const id=idEl.value.trim();
+  const unitEl=document.getElementById('ff-unit');
+  const unit=unitEl.tagName==='SELECT'?unitEl.value:'';
+  const level=document.getElementById('ff-level').value;
+  const months=+document.getElementById('ff-months').value;
+  const fee=parseFloat(document.getElementById('ff-fee').value);
+  const taxRate=parseFloat(document.getElementById('ff-tax').value);
+  const status=+document.getElementById('ff-status').value;
+  const desc=document.getElementById('ff-desc').value.trim();
+  const m=document.getElementById('form-modal');
+  const isEdit=!!m._editId;
+  let hasError=false,firstError=null;
+
+  if(!id){idEl.closest('.form-item').classList.add('error');document.getElementById('err-id').classList.add('show');if(!firstError)firstError=idEl;hasError=true;}
+  else if(!isEdit&&equityRecords.some(r=>r.id===id)){idEl.closest('.form-item').classList.add('error');document.getElementById('err-id').textContent='权益ID已存在';document.getElementById('err-id').classList.add('show');if(!firstError)firstError=idEl;hasError=true;}
+  if(!isEdit&&!unit){unitEl.closest('.form-item').classList.add('error');document.getElementById('err-unit').classList.add('show');if(!firstError)firstError=unitEl;hasError=true;}
+  if(!level){document.getElementById('ff-level').closest('.form-item').classList.add('error');document.getElementById('err-level').classList.add('show');if(!firstError)firstError=document.getElementById('ff-level');hasError=true;}
+  if(!months){document.getElementById('ff-months').closest('.form-item').classList.add('error');document.getElementById('err-months').classList.add('show');if(!firstError)firstError=document.getElementById('ff-months');hasError=true;}
+  if(isNaN(fee)||fee<0){document.getElementById('ff-fee').closest('.form-item').classList.add('error');document.getElementById('err-fee').classList.add('show');if(!firstError)firstError=document.getElementById('ff-fee');hasError=true;}
+
+  if(hasError){firstError.scrollIntoView({behavior:'smooth',block:'center'});firstError.focus&&firstError.focus();return;}
+
+  if(isEdit){
+    const r=equityRecords.find(x=>x.id===m._editId);
+    r.level=level;r.validMonths=months;r.fee=fee;r.taxRate=taxRate;r.status=status;r.desc=desc;
+    showToast('权益配置修改成功','success');
+  }else{
+    equityRecords.push({id,unit,level,validMonths:months,fee,taxRate,status,desc,defaultDiscount:100,products:{}});
+    showToast('权益配置新增成功','success');
+  }
+  filtered=[...equityRecords];closeFormModal();renderTable();
+}
+
+// ══ Config Equity Modal ══
+function openConfigModal(equityId){
+  const record=equityRecords.find(r=>r.id===equityId);
+  if(!record)return;
+  currentConfigId=equityId;
+  configTemp={defaultDiscount:record.defaultDiscount,products:{...record.products}};
+  document.getElementById('config-modal-title').textContent=`配置权益 — ${record.id}（${record.level}）`;
+  renderConfigBody();
+  showModal('config-overlay','config-modal');
+}
+function renderConfigBody(){
+  const checkedIds=Object.keys(configTemp.products);
+  const productRows=shelfProducts.map(p=>{
+    const checked=checkedIds.includes(p.id)?'checked':'';
+    const discount=configTemp.products[p.id]!==undefined?configTemp.products[p.id]:configTemp.defaultDiscount;
+    return `<tr>
+      <td><input type="checkbox" ${checked} onchange="toggleProduct('${p.id}',this.checked)"></td>
+      <td>${p.name}</td>
+      <td>${p.billingType}</td>
+      <td>${p.pricingName}</td>
+      <td>${p.dimensions.join('、')}</td>
+      <td><input type="number" min="0" max="100" value="${discount}" onchange="updateDiscount('${p.id}',this.value)" ${!checked?'disabled':''}> %</td>
+    </tr>`;
+  }).join('');
+
+  const summaryItems=checkedIds.map(pid=>{
+    const p=shelfProducts.find(x=>x.id===pid);
+    if(!p)return '';
+    const d=configTemp.products[pid];
+    return `<span class="sp-item">${p.name}（${d}%）</span>`;
+  }).filter(Boolean).join('');
+
+  document.getElementById('config-body').innerHTML=`
+    <div style="margin-bottom:16px">
+      <label style="font-size:12px;color:#555;font-weight:500">默认折扣（%）</label>
+      <div style="margin-top:6px;display:flex;align-items:center;gap:6px">
+        <input type="number" id="cfg-default-discount" min="0" max="100" value="${configTemp.defaultDiscount}" style="width:100px;height:30px;border:1px solid #d9d9d9;border-radius:4px;padding:0 8px;font-size:12px;outline:none" onchange="updateDefaultDiscount(this.value)">
+        <span style="font-size:12px;color:#888">% （非权益产品的默认固定折扣率）</span>
+      </div>
+    </div>
+    <div>
+      <label style="font-size:12px;color:#555;font-weight:500">上架产品列表</label>
+      <div style="margin-top:6px;max-height:300px;overflow-y:auto;border:1px solid #f0f0f0;border-radius:4px">
+        <table class="config-product-table">
+          <thead>
+            <tr>
+              <th style="width:40px"><input type="checkbox" id="cfg-cb-all" onchange="toggleAllProducts(this.checked)"></th>
+              <th>产品名称</th>
+              <th>计费类型</th>
+              <th>定价简称</th>
+              <th>定价维度</th>
+              <th style="width:120px">权益折扣</th>
+            </tr>
+          </thead>
+          <tbody>${productRows}</tbody>
+        </table>
+      </div>
+    </div>
+    <div class="selected-products-summary">
+      <div class="sp-title">已勾选产品（${checkedIds.length}个）</div>
+      <div>${summaryItems||'<span style="color:#999">暂未勾选任何产品</span>'}</div>
+    </div>
+  `;
+}
+function updateDefaultDiscount(v){
+  const n=Math.max(0,Math.min(100,parseFloat(v)||0));
+  configTemp.defaultDiscount=n;
+  // Update unchecked products to use new default
+  shelfProducts.forEach(p=>{
+    if(configTemp.products[p.id]===undefined){
+      // not checked, no need to update stored value
+    }
+  });
+}
+function toggleProduct(pid,checked){
+  if(checked){
+    configTemp.products[pid]=configTemp.defaultDiscount;
+  }else{
+    delete configTemp.products[pid];
+  }
+  renderConfigBody();
+}
+function toggleAllProducts(checked){
+  if(checked){
+    shelfProducts.forEach(p=>{if(configTemp.products[p.id]===undefined)configTemp.products[p.id]=configTemp.defaultDiscount;});
+  }else{
+    shelfProducts.forEach(p=>delete configTemp.products[p.id]);
+  }
+  renderConfigBody();
+}
+function updateDiscount(pid,val){
+  const n=Math.max(0,Math.min(100,parseFloat(val)||0));
+  if(configTemp.products[pid]!==undefined)configTemp.products[pid]=n;
+  renderConfigBody();
+}
+function closeConfigModal(){hideModal('config-overlay','config-modal');currentConfigId=null;}
+function saveConfig(){
+  if(!currentConfigId)return;
+  const record=equityRecords.find(r=>r.id===currentConfigId);
+  if(!record)return;
+  // Check if new products added compared to original
+  const origIds=Object.keys(record.products);
+  const newIds=Object.keys(configTemp.products);
+  const hasNewProducts=newIds.some(id=>!origIds.includes(id));
+  if(hasNewProducts){
+    showScopeModal(()=>{
+      record.defaultDiscount=configTemp.defaultDiscount;
+      record.products={...configTemp.products};
+      closeScopeModal();closeConfigModal();
+      showToast('权益配置保存成功','success');
+    });
+  }else{
+    record.defaultDiscount=configTemp.defaultDiscount;
+    record.products={...configTemp.products};
+    closeConfigModal();
+    showToast('权益配置保存成功','success');
+  }
+}
+
+// ══ Scope Modal ══
+function showScopeModal(callback){
+  _scopeCallback=callback;
+  document.querySelectorAll('input[name="scope"][value="new"]')[0].checked=true;
+  document.getElementById('scope-overlay').style.display='block';
+  document.getElementById('scope-modal').style.display='flex';
+}
+function closeScopeModal(){
+  document.getElementById('scope-overlay').style.display='none';
+  document.getElementById('scope-modal').style.display='none';
+  _scopeCallback=null;
+}
+function confirmScope(){
+  if(_scopeCallback)_scopeCallback();
+}
+
+// ══ Modal helpers ══
+function showModal(ovId,boxId){
+  document.getElementById(ovId).style.display='block';
+  const m=document.getElementById(boxId);m.style.display='flex';
+}
+function hideModal(ovId,boxId){
+  document.getElementById(ovId).style.display='none';
+  document.getElementById(boxId).style.display='none';
+}
+
+// ══ Tree dropdown ══
+let treeOpen=false;
+function buildTree(nodes,depth=0){
+  return nodes.map(n=>{
+    const hasChild=n.children&&n.children.length>0;
+    const isOpen=depth<1&&hasChild;
+    return `<div>
+      <div class="tree-node ${hasChild?'has-child':''}" style="--depth:${depth};${hasChild?'color:#999;cursor:default;':''}" onclick="treeNodeClick('${n.id}','${n.name}',${hasChild},event)">
+        ${hasChild?`<span class="t-arrow ${isOpen?'open':''}" id="tarrow-${n.id}">›</span>`:'<span style="width:14px;flex-shrink:0"></span>'}
+        <span>${n.name}${hasChild?' (请选择下级单位)':''}</span>
+      </div>
+      ${hasChild?`<div class="tree-children ${isOpen?'open':''}" id="tchildren-${n.id}">${buildTree(n.children,depth+1)}</div>`:''}
+    </div>`;
+  }).join('');
+}
+function treeNodeClick(id,name,hasChild,e){
+  e.stopPropagation();
+  if(hasChild){
+    const ch=document.getElementById('tchildren-'+id);
+    const ar=document.getElementById('tarrow-'+id);
+    if(ch){ch.classList.toggle('open');ar&&ar.classList.toggle('open');}
+  } else {
+    document.getElementById('unit-value').value=id;
+    const d=document.getElementById('unit-display');
+    d.textContent=name;d.style.color='#333';
+    closeTree();
+  }
+}
+function toggleTree(e){
+  e.stopPropagation();
+  const popup=document.getElementById('tree-popup');
+  if(!popup.innerHTML){popup.innerHTML=buildTree(orgTree);}
+  const trigger=document.getElementById('unit-trigger');
+  const rect=trigger.getBoundingClientRect();
+  popup.style.top=(rect.bottom+4)+'px';
+  popup.style.left=rect.left+'px';
+  popup.classList.toggle('show');
+  treeOpen=popup.classList.contains('show');
+}
+function closeTree(){document.getElementById('tree-popup').classList.remove('show');treeOpen=false;}
+document.addEventListener('click',e=>{if(treeOpen&&!e.target.closest('#tree-popup')&&!e.target.closest('#unit-trigger'))closeTree();});
+
+// ══ Nav / Tabs ══
+function toggleNav(key){
+  const s=document.getElementById('sub-'+key),a=document.getElementById('arrow-'+key);
+  s.classList.toggle('open');a.classList.toggle('open');
+}
+const openTabs=['权益配置'];
+function switchTab(name){
+  if(!openTabs.includes(name)){
+    openTabs.push(name);
+    const t=document.createElement('div');
+    t.className='tab';t.id='tab-'+name;
+    t.innerHTML=`${name} <span class="close-x" onclick="removeTab('${name}',event)">×</span>`;
+    t.onclick=()=>activateTab(name);
+    document.getElementById('tabbar').appendChild(t);
+  }
+  activateTab(name);
+  document.querySelectorAll('.nav-sub-item').forEach(el=>el.classList.toggle('active',el.textContent.trim()===name));
+}
+function activateTab(name){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.id==='tab-'+name));}
+function removeTab(name,e){e&&e.stopPropagation();const t=document.getElementById('tab-'+name);if(t){t.remove();openTabs.splice(openTabs.indexOf(name),1);}}
+
+// ══ Init ══
+renderTable();
+</script>
+</body>
+</html>

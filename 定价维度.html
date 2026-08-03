@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>定价维度 — 运营管理系统</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;font-size:13px;background:#f0f2f5;display:flex;height:100vh;overflow:hidden;color:#333}
+/* ── Sidebar ── */
+.sidebar{width:188px;min-width:188px;background:#1a3a5c;color:#fff;display:flex;flex-direction:column;height:100vh;overflow-y:auto;flex-shrink:0}
+.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:2px}
+.sidebar-logo{padding:14px 16px 12px;background:#143050;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.sidebar-logo .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,#4096ff,#1677ff);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.sidebar-logo .brand{font-size:14px;font-weight:600;color:#fff;line-height:1.3}
+.nav-item{display:flex;align-items:center;gap:8px;padding:11px 16px;cursor:pointer;color:rgba(255,255,255,.78);transition:all .18s;font-size:13px}
+.nav-item:hover{background:rgba(64,150,255,.18);color:#fff}
+.nav-item.active{background:rgba(64,150,255,.25);color:#fff}
+.nav-item.parent{justify-content:space-between}
+.nav-item .icon{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.nav-sub{overflow:hidden;max-height:0;transition:max-height .28s ease;background:rgba(0,0,0,.18)}
+.nav-sub.open{max-height:600px}
+.nav-sub-item{display:block;padding:9px 16px 9px 42px;color:rgba(255,255,255,.62);cursor:pointer;font-size:12px;transition:all .18s}
+.nav-sub-item:hover{color:#fff;background:rgba(64,150,255,.15)}
+.nav-sub-item.active{color:#69b1ff;background:rgba(64,150,255,.22);font-weight:500}
+.arrow{font-size:11px;transition:transform .28s;color:rgba(255,255,255,.45)}
+.arrow.open{transform:rotate(90deg)}
+/* ── Main ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{background:#fff;padding:0 16px;height:46px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e8e8e8;flex-shrink:0}
+.breadcrumb{display:flex;align-items:center;gap:5px;color:#888;font-size:12px}
+.breadcrumb .sep{color:#d9d9d9}
+.breadcrumb .cur{color:#1677ff}
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.topbar-icon{width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:50%;color:#888;font-size:14px}
+.topbar-icon:hover{background:#f0f2f5}
+.avatar{width:28px;height:28px;background:#1677ff;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;cursor:pointer;font-weight:600}
+.tabbar{background:#fff;border-bottom:1px solid #e8e8e8;display:flex;overflow-x:auto;flex-shrink:0;min-height:36px}
+.tabbar::-webkit-scrollbar{height:2px}
+.tab{display:flex;align-items:center;gap:5px;padding:7px 14px;cursor:pointer;border-right:1px solid #f0f0f0;white-space:nowrap;color:#777;border-bottom:2px solid transparent;flex-shrink:0;font-size:12px}
+.tab:hover{background:#fafafa;color:#333}
+.tab.active{color:#1677ff;border-bottom-color:#1677ff}
+.tab .close-x{font-size:11px;opacity:.45;margin-left:1px;line-height:1}
+.tab .close-x:hover{opacity:1;color:#f00}
+/* ── Content ── */
+.content{flex:1;padding:12px 14px;overflow:auto;display:flex;flex-direction:column;gap:10px}
+.card{background:#fff;border-radius:6px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+/* ── Filter ── */
+.filter-row{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap}
+.field{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.field label{white-space:nowrap;color:#666;font-size:12px;flex-shrink:0}
+.field input,.field select,.field .tree-trigger{height:30px;border:1px solid #d9d9d9;border-radius:4px;padding:0 8px;font-size:12px;outline:none;color:#333;background:#fff;min-width:0}
+.field input:focus,.field select:focus{border-color:#1677ff;box-shadow:0 0 0 2px rgba(22,119,255,.1)}
+.field-unit{flex:0 0 auto}.field-unit .tree-trigger{width:180px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:4px;user-select:none}
+.field-name input{width:150px}
+.field-pid input{width:110px}
+/* Buttons */
+.btn{height:30px;padding:0 14px;border:none;border-radius:4px;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:4px;transition:all .18s;white-space:nowrap}
+.btn-primary{background:#1677ff;color:#fff}
+.btn-primary:hover{background:#4096ff}
+.btn-default{background:#fff;color:#555;border:1px solid #d9d9d9}
+.btn-default:hover:not(:disabled){color:#1677ff;border-color:#1677ff}
+.btn-danger{background:#ff4d4f;color:#fff;border:1px solid #ff4d4f}
+.btn-danger:hover:not(:disabled){background:#ff7875}
+.btn-reset{background:#fff;color:#666;border:1px solid #d9d9d9}
+.btn-reset:hover{background:#f5f5f5}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+/* Action bar */
+.action-bar{display:flex;gap:8px;margin-bottom:10px;align-items:center}
+/* Table */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;table-layout:auto}
+thead th{background:#f5f8ff;padding:9px 10px;text-align:left;font-weight:600;color:#4a5568;font-size:12px;border-bottom:2px solid #dce8ff;white-space:nowrap;position:sticky;top:0;z-index:2}
+th.col-op,td.col-op{position:sticky;right:0;z-index:3;background:#f5f8ff;box-shadow:-3px 0 6px rgba(0,0,0,.06)}
+td.col-op{background:#fff}
+tbody tr:hover td.col-op{background:#f0f6ff}
+tbody tr.selected td.col-op{background:#e6f4ff}
+tbody td{padding:8px 10px;border-bottom:1px solid #f0f3fa;color:#333;font-size:12px;vertical-align:middle}
+tbody tr:hover{background:#f0f6ff}
+tbody tr.selected{background:#e6f4ff}
+.cb{width:14px;height:14px;cursor:pointer;accent-color:#1677ff}
+.op-link{color:#1677ff;cursor:pointer;font-size:12px}
+.op-link:hover{text-decoration:underline}
+/* Tags */
+.tags-wrap{display:flex;flex-wrap:wrap;gap:3px}
+.tag{display:inline-block;padding:1px 6px;background:#f0f5ff;color:#2f54eb;border-radius:3px;font-size:11px;border:1px solid #adc6ff}
+.tag .ms-del{cursor:pointer;opacity:.7;margin-left:3px}.tag .ms-del:hover{opacity:1}
+/* Pagination */
+.pager{display:flex;align-items:center;gap:5px;padding-top:10px;border-top:1px solid #f0f0f0;margin-top:4px;flex-wrap:wrap}
+.pager .total{color:#666;font-size:12px;margin-right:4px}
+.pager select{height:26px;border:1px solid #d9d9d9;border-radius:4px;padding:0 4px;font-size:12px}
+.pager .pg-btn{min-width:28px;height:28px;border:1px solid #d9d9d9;background:#fff;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:#555}
+.pager .pg-btn:hover,.pager .pg-btn.active{background:#1677ff;color:#fff;border-color:#1677ff}
+.pager .pg-btn:disabled{opacity:.35;cursor:default;pointer-events:none}
+.pager .jumper{display:flex;align-items:center;gap:4px;font-size:12px;color:#666;margin-left:4px}
+.pager .jumper input{width:42px;height:26px;border:1px solid #d9d9d9;border-radius:4px;text-align:center;font-size:12px;outline:none}
+/* ── Tree dropdown ── */
+.tree-popup{position:fixed;background:#fff;border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:2000;padding:6px 0;min-width:220px;max-height:320px;overflow-y:auto;display:none}
+.tree-popup.show{display:block}
+.tree-node{padding:7px 12px 7px calc(12px + var(--depth)*16px);cursor:pointer;display:flex;align-items:center;gap:5px;font-size:12px;color:#333}
+.tree-node:hover{background:#f0f6ff;color:#1677ff}
+.tree-node.has-child:hover{background:#fafafa;color:#999}
+.tree-node.selected{color:#1677ff;background:#e6f4ff}
+.tree-node .t-arrow{font-size:10px;color:#bbb;transition:transform .2s;flex-shrink:0}
+.tree-node .t-arrow.open{transform:rotate(90deg)}
+.tree-children{overflow:hidden;max-height:0;transition:max-height .2s}
+.tree-children.open{max-height:500px}
+/* ── Modal ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,21,41,.5);z-index:1000;backdrop-filter:blur(2px)}
+.modal-box{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.18);z-index:1001;flex-direction:column}
+.modal-hd{padding:18px 24px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.modal-hd .modal-title{font-size:16px;font-weight:600;color:#1a3a5c}
+.modal-hd .close-btn{cursor:pointer;font-size:22px;color:#bbb;line-height:1;padding:0 3px;transition:color .2s}
+.modal-hd .close-btn:hover{color:#666}
+.modal-bd{padding:24px;overflow-y:auto;flex:1}
+.modal-ft{padding:14px 24px;border-top:1px solid #f0f0f0;display:flex;gap:10px;justify-content:flex-end;flex-shrink:0;background:#fafbfc}
+/* Form */
+.form-grid{display:grid;grid-template-columns:1fr;gap:18px 20px}
+.form-item{display:flex;flex-direction:column;gap:6px}
+.form-item label{font-size:12px;color:#555;font-weight:500}
+.form-item label .req{color:#ff4d4f;margin-right:2px}
+.form-item input,.form-item select{border:1px solid #d9d9d9;border-radius:4px;padding:7px 11px;font-size:12px;outline:none;width:100%;background:#fff;color:#333;transition:border-color .2s,box-shadow .2s}
+.form-item input:focus,.form-item select:focus{border-color:#1677ff;box-shadow:0 0 0 2px rgba(22,119,255,.1)}
+.form-item input[readonly],.form-item select:disabled{background:#f5f5f5;color:#999;cursor:not-allowed}
+.form-checkbox-group{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:8px 0}
+.form-checkbox-group label{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:normal;white-space:nowrap}
+.form-checkbox-group input[type="checkbox"]{accent-color:#1677ff;cursor:pointer;width:15px;height:15px}
+.dim-input-row{display:flex;gap:8px;align-items:flex-start}
+.dim-input-row input{flex:1}
+/* Inline form layout for modal */
+.form-grid.inline .form-item{display:grid;grid-template-columns:110px 1fr;gap:4px 12px;align-items:flex-start}
+.form-grid.inline .form-item label{margin-top:7px}
+/* Toast */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#fff;border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:12px 20px;z-index:3000;display:none;align-items:center;gap:10px;font-size:13px}
+.toast.show{display:flex;animation:slideDown .3s}
+.toast.success{border-color:#52c41a;background:#f6ffed}
+.toast.error{border-color:#ff4d4f;background:#fff1f0}
+.toast.warning{border-color:#faad14;background:#fffbe6}
+.toast-icon{font-size:16px}
+@keyframes slideDown{from{opacity:0;transform:translate(-50%,-20px)}to{opacity:1;transform:translate(-50%,0)}}
+/* Confirm dialog */
+.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,21,41,.5);z-index:2500;align-items:center;justify-content:center}
+.confirm-overlay.show{display:flex}
+.confirm-box{background:#fff;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.2);width:460px;max-width:90vw}
+.confirm-hd{padding:16px 20px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600;color:#1a3a5c}
+.confirm-hd .icon{font-size:18px}
+.confirm-bd{padding:20px;font-size:13px;line-height:1.7;color:#333}
+.confirm-list{margin:10px 0;padding:10px 12px;background:#fafafa;border-radius:4px;max-height:180px;overflow-y:auto}
+.confirm-list-item{padding:4px 0;color:#666;font-size:12px}
+.confirm-ft{padding:12px 20px;border-top:1px solid #f0f0f0;display:flex;gap:8px;justify-content:flex-end}
+.err-msg{color:#ff4d4f;font-size:11px;margin-top:3px;display:none}
+.err-msg.show{display:block}
+.form-item.error input,.form-item.error select{border-color:#ff4d4f}
+.form-item.error label{color:#ff4d4f}
+</style>
+</head>
+<body>
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">运</div>
+    <div class="brand">运营管理系统</div>
+  </div>
+          <nav id="nav">
+    <div class="nav-item" onclick="location.href='index.html'"><span class="icon">🏠</span>首页</div>
+    <div class="nav-item parent" onclick="toggleNav('product')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">📦</span>产品管理</span>
+      <span class="arrow" id="arrow-product">›</span>
+    </div>
+    <div class="nav-sub" id="sub-product">
+      <div class="nav-sub-item" onclick="location.href='产品池.html'">产品池</div>
+      <div class="nav-sub-item active" onclick="location.href='定价维度.html'">定价维度</div>
+      <div class="nav-sub-item" onclick="location.href='产品定价.html'">产品定价</div>
+      <div class="nav-sub-item" onclick="location.href='产品分配.html'">产品分配</div>
+      <div class="nav-sub-item">申请跨区推广</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('client')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">⚙️</span>客户端配置</span>
+      <span class="arrow" id="arrow-client">›</span>
+    </div>
+    <div class="nav-sub" id="sub-client">
+      <div class="nav-sub-item" onclick="location.href='客户端配置-一级菜单.html'">一级菜单</div>
+      <div class="nav-sub-item">工作台</div>
+      <div class="nav-sub-item" onclick="location.href='客户端配置-财税业务.html'">财税业务</div>
+      <div class="nav-sub-item">服务培训</div>
+      <div class="nav-sub-item">应用市场</div>
+      <div class="nav-sub-item">常用工具</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('equity')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">🏢</span>权益配置</span>
+      <span class="arrow" id="arrow-equity">›</span>
+    </div>
+    <div class="nav-sub" id="sub-equity">
+      <div class="nav-sub-item" onclick="location.href='权益配置.html'">权益配置</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('salecfg')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">📄</span>销售配置</span>
+      <span class="arrow" id="arrow-salecfg">›</span>
+    </div>
+    <div class="nav-sub" id="sub-salecfg">
+      <div class="nav-sub-item">协议模板</div>
+      <div class="nav-sub-item" onclick="location.href='支付配置.html'">支付配置</div>
+      <div class="nav-sub-item">开票配置</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('sales')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">💰</span>销售中心</span>
+      <span class="arrow" id="arrow-sales">›</span>
+    </div>
+    <div class="nav-sub" id="sub-sales">
+      <div class="nav-sub-item" onclick="location.href='订单管理.html'">订单管理</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('analysis')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">📊</span>统计分析</span>
+      <span class="arrow" id="arrow-analysis">›</span>
+    </div>
+    <div class="nav-sub" id="sub-analysis">
+      <div class="nav-sub-item" onclick="location.href='一户式视图.html'">一户式视图</div>
+      <div class="nav-sub-item" onclick="location.href='活跃度分析.html'">活跃度分析</div>
+      <div class="nav-sub-item" onclick="location.href='应用分析.html'">应用分析</div>
+      <div class="nav-sub-item" onclick="location.href='销售统计.html'">销售统计</div>
+    </div>
+    <div class="nav-item"><span class="icon">👥</span>用户中心</div>
+    <div class="nav-item"><span class="icon">💬</span>消息中心</div>
+  </nav>
+</aside>
+<!-- ══ MAIN ══ -->
+<div class="main">
+  <div class="topbar">
+    <div class="breadcrumb">
+      <span>首页</span><span class="sep">/</span>
+      <span>产品管理</span><span class="sep">/</span>
+      <span class="cur">定价维度</span>
+    </div>
+    <div class="topbar-actions">
+      <div class="topbar-icon" title="搜索">🔍</div>
+      <div class="topbar-icon" title="帮助">❓</div>
+      <div class="topbar-icon" title="全屏">⛶</div>
+      <div class="avatar" title="管理员">管</div>
+    </div>
+  </div>
+  <div class="tabbar" id="tabbar">
+    <div class="tab">首页</div>
+    <div class="tab active" id="tab-定价维度">定价维度 <span class="close-x" onclick="removeTab('定价维度',event)">×</span></div>
+  </div>
+  <div class="content">
+    <!-- Filter -->
+    <div class="card">
+      <div class="filter-row">
+        <div class="field field-unit">
+          <label>所属单位</label>
+          <div class="tree-trigger" id="unit-trigger" onclick="toggleTree(event)" tabindex="0">
+            <span id="unit-display" style="color:#bbb;font-size:12px">请选择所属单位</span>
+            <span style="font-size:10px;color:#bbb">▼</span>
+          </div>
+          <input type="hidden" id="unit-value">
+        </div>
+        <div class="field field-name"><label>产品名称</label><input type="text" id="f-search-name" placeholder="请输入产品名称"></div>
+        <div class="field field-pid"><label>产品ID</label><input type="text" id="f-search-pid" placeholder="请输入产品ID"></div>
+        <button class="btn btn-primary" onclick="searchTable()">🔍 搜索</button>
+        <button class="btn btn-reset" onclick="resetFilter()">↺ 重置</button>
+      </div>
+    </div>
+    <!-- Tree dropdown -->
+    <div class="tree-popup" id="tree-popup"></div>
+    <!-- Table -->
+    <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;padding-bottom:0">
+      <div class="action-bar">
+        <button class="btn btn-primary" onclick="openFormModal()">＋ 新增</button>
+        <button class="btn btn-default" id="btn-edit" disabled onclick="editSelected()">✎ 修改</button>
+        <button class="btn btn-danger" id="btn-del" disabled onclick="deleteSelected()">✕ 删除</button>
+      </div>
+      <div class="tbl-wrap" style="flex:1;overflow:auto">
+        <table id="main-table">
+          <thead>
+            <tr>
+              <th style="width:36px"><input type="checkbox" class="cb" id="cb-all" onchange="toggleAll(this)"></th>
+              <th style="width:46px">序号</th>
+              <th>所属单位</th>
+              <th>产品名称</th>
+              <th>产品ID</th>
+              <th>定价维度</th>
+              <th>创建人</th>
+              <th>创建时间</th>
+              <th>修改人</th>
+              <th>修改时间</th>
+              <th class="col-op" style="width:80px">操作</th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+      <div class="pager" id="pager" style="padding:10px 0 12px;flex-shrink:0"></div>
+    </div>
+  </div>
+</div>
+<!-- ══ Toast ══ -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toast-icon"></span>
+  <span id="toast-msg"></span>
+</div>
+<!-- ══ Confirm Dialog ══ -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-hd"><span class="icon" id="confirm-icon"></span><span id="confirm-title"></span></div>
+    <div class="confirm-bd" id="confirm-body"></div>
+    <div class="confirm-ft">
+      <button class="btn btn-default" onclick="closeConfirm()">取消</button>
+      <button class="btn btn-primary" id="confirm-ok-btn" onclick="confirmOk()">确定</button>
+    </div>
+  </div>
+</div>
+<!-- ══ ADD/EDIT MODAL ══ -->
+<div class="modal-overlay" id="form-overlay" onclick="closeFormModal()"></div>
+<div class="modal-box" id="form-modal" style="width:520px;max-width:92vw;max-height:88vh">
+  <div class="modal-hd">
+    <span class="modal-title" id="form-modal-title">新增定价维度</span>
+    <span class="close-btn" onclick="closeFormModal()">×</span>
+  </div>
+  <div class="modal-bd" id="form-body"></div>
+  <div class="modal-ft">
+    <button class="btn btn-default" onclick="closeFormModal()">取消</button>
+    <button class="btn btn-primary" onclick="saveForm()">确定</button>
+  </div>
+</div>
+<script>
+// ══ 机构树 ══
+const orgTree=[
+  {id:'hq',name:'总公司',children:[
+    {id:'bj',name:'北京分公司',children:[
+      {id:'bj-dc',name:'东城区',children:[]},{id:'bj-xc',name:'西城区',children:[]},{id:'bj-cy',name:'朝阳区',children:[]},{id:'bj-hp',name:'海淀区',children:[]}
+    ]},
+    {id:'sh',name:'上海分公司',children:[
+      {id:'sh-hp',name:'黄浦区',children:[]},{id:'sh-jg',name:'静安区',children:[]},{id:'sh-pd',name:'浦东新区',children:[]}
+    ]},
+    {id:'gz',name:'广州分公司',children:[
+      {id:'gz-th',name:'天河区',children:[]},{id:'gz-yh',name:'越秀区',children:[]},{id:'gz-hw',name:'黄埔区',children:[]}
+    ]},
+    {id:'cd',name:'成都分公司',children:[
+      {id:'cd-jj',name:'锦江区',children:[]},{id:'cd-qt',name:'青羊区',children:[]},{id:'cd-wd',name:'武侯区',children:[]}
+    ]},
+    {id:'wh',name:'武汉分公司',children:[
+      {id:'wh-jh',name:'江汉区',children:[]},{id:'wh-wc',name:'武昌区',children:[]},{id:'wh-hk',name:'洪山区',children:[]}
+    ]}
+  ]}
+];
+const orgMap={};
+function buildOrgMap(nodes){nodes.forEach(n=>{orgMap[n.id]=n.name;if(n.children)buildOrgMap(n.children);})}
+buildOrgMap(orgTree[0].children.concat([orgTree[0]]));
+
+// ══ 产品 mock（用于下拉选择）══
+const products=[
+  {id:'PRD001',name:'云端记账平台',unit:'bj'},
+  {id:'PRD002',name:'企业安全卫士',unit:'hq'},
+  {id:'PRD003',name:'增值税申报助手',unit:'bj'},
+  {id:'PRD004',name:'电子发票云平台',unit:'hq'},
+  {id:'PRD005',name:'工商年报通',unit:'sh'},
+  {id:'PRD006',name:'企业信用雷达',unit:'hq'},
+  {id:'PRD007',name:'职业技能云课堂',unit:'gz'},
+  {id:'PRD008',name:'社保公积金代办',unit:'bj-dc'},
+  {id:'PRD009',name:'智能问答机器人',unit:'hq'},
+  {id:'PRD010',name:'人脸考勤一体机',unit:'gz'},
+  {id:'PRD011',name:'合同智能审查',unit:'sh'},
+  {id:'PRD012',name:'商标监控平台',unit:'hq'},
+];
+
+// ══ 预设维度 ══
+const PRESET_DIMS=['授权时长','发票张数','版本','功能模块'];
+const MAX_DIMS=10;
+
+// ══ Mock 定价维度记录 ══
+const dimensionRecords=[
+  {id:'D001',productId:'PRD001',dimensions:['授权时长','版本'],creator:'管理员',createTime:'2024-06-12 09:30:00',updater:'管理员',updateTime:'2025-03-08 14:22:00'},
+  {id:'D002',productId:'PRD002',dimensions:['授权时长','功能模块'],creator:'管理员',createTime:'2024-07-03 11:15:00',updater:'管理员',updateTime:'2025-01-20 10:05:00'},
+  {id:'D003',productId:'PRD003',dimensions:['发票张数'],creator:'管理员',createTime:'2024-05-18 16:45:00',updater:'管理员',updateTime:'2025-02-11 09:18:00'},
+  {id:'D004',productId:'PRD004',dimensions:['授权时长','发票张数','版本'],creator:'管理员',createTime:'2024-08-22 08:00:00',updater:'管理员',updateTime:'2025-04-01 17:30:00'},
+  {id:'D005',productId:'PRD005',dimensions:['版本','功能模块'],creator:'管理员',createTime:'2024-09-05 13:20:00',updater:'管理员',updateTime:'2025-05-12 11:45:00'},
+  {id:'D006',productId:'PRD006',dimensions:['授权时长'],creator:'管理员',createTime:'2024-04-28 10:10:00',updater:'管理员',updateTime:'2025-03-25 15:00:00'},
+  {id:'D007',productId:'PRD007',dimensions:['授权时长','版本','功能模块'],creator:'管理员',createTime:'2024-10-14 09:00:00',updater:'管理员',updateTime:'2025-06-18 08:30:00'},
+  {id:'D008',productId:'PRD008',dimensions:['发票张数','功能模块'],creator:'管理员',createTime:'2024-03-10 14:00:00',updater:'管理员',updateTime:'2025-01-08 16:20:00'},
+  {id:'D009',productId:'PRD009',dimensions:['版本'],creator:'管理员',createTime:'2024-11-01 11:30:00',updater:'管理员',updateTime:'2025-07-10 09:45:00'},
+  {id:'D010',productId:'PRD010',dimensions:['授权时长','发票张数','版本','功能模块'],creator:'管理员',createTime:'2024-12-20 08:45:00',updater:'管理员',updateTime:'2025-05-28 13:10:00'},
+];
+
+// ══ State ══
+let currentPage=1,pageSize=10,filtered=[...dimensionRecords],selected=new Set();
+let selectedDims=[];
+
+// ══ Button state ══
+function updateBtns(){
+  const n=selected.size;
+  document.getElementById('btn-edit').disabled=n!==1;
+  document.getElementById('btn-del').disabled=n===0;
+}
+
+// ══ Render table ══
+function renderTable(){
+  const start=(currentPage-1)*pageSize;
+  const rows=filtered.slice(start,start+pageSize);
+  document.getElementById('table-body').innerHTML=rows.map((r,i)=>{
+    const p=products.find(prod=>prod.id===r.productId);
+    return `<tr class="${selected.has(r.id)?'selected':''}" onclick="toggleRow('${r.id}',event)" style="cursor:pointer">
+      <td><input type="checkbox" class="cb" ${selected.has(r.id)?'checked':''} onclick="event.stopPropagation()" onchange="toggleRow('${r.id}',event)"></td>
+      <td style="color:#999;text-align:center">${start+i+1}</td>
+      <td>${getOrgName(p.unit)}</td>
+      <td style="font-weight:500">${p.name}</td>
+      <td style="color:#1677ff">${p.id}</td>
+      <td><div class="tags-wrap">${r.dimensions.map(d=>`<span class="tag">${d}</span>`).join('')}</div></td>
+      <td style="white-space:nowrap">${r.creator||'—'}</td>
+      <td style="color:#666;white-space:nowrap">${r.createTime||'—'}</td>
+      <td style="white-space:nowrap">${r.updater||'—'}</td>
+      <td style="color:#666;white-space:nowrap">${r.updateTime||'—'}</td>
+      <td class="col-op" style="white-space:nowrap"><span class="op-link" onclick="openFormModal('${r.id}');event.stopPropagation()">修改</span></td>
+    </tr>`;
+  }).join('');
+  const allOnPage=filtered.slice(start,start+pageSize).every(r=>selected.has(r.id));
+  document.getElementById('cb-all').checked=allOnPage&&rows.length>0;
+  renderPager();
+  updateBtns();
+}
+
+function getOrgName(id){return orgMap[id]||id;}
+
+function nowTime(){
+  const d=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+function renderPager(){
+  const total=filtered.length,pages=Math.ceil(total/pageSize)||1;
+  let h=`<span class="total">共 ${total} 条</span>
+    <select onchange="changePageSize(this.value)">${[10,20,50].map(n=>`<option ${pageSize==n?'selected':''}>${n}条/页</option>`).join('')}</select>`;
+  h+=`<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+  let arr=[];
+  if(pages<=7){for(let i=1;i<=pages;i++)arr.push(i);}
+  else{arr=[1];if(currentPage>3)arr.push('…');for(let i=Math.max(2,currentPage-1);i<=Math.min(pages-1,currentPage+1);i++)arr.push(i);if(currentPage<pages-2)arr.push('…');arr.push(pages);}
+  arr.forEach(p=>{h+=p==='…'?`<span style="padding:0 3px;color:#bbb">…</span>`:`<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;});
+  h+=`<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===pages?'disabled':''}>›</button>`;
+  h+=`<span class="jumper">前往<input type="number" min="1" max="${pages}" onkeydown="if(event.key==='Enter')goPage(+this.value)">页</span>`;
+  document.getElementById('pager').innerHTML=h;
+}
+
+function goPage(p){const pages=Math.ceil(filtered.length/pageSize)||1;if(p<1||p>pages)return;currentPage=p;renderTable();}
+function changePageSize(v){pageSize=+v;currentPage=1;renderTable();}
+function toggleAll(cb){const start=(currentPage-1)*pageSize;filtered.slice(start,start+pageSize).forEach(r=>cb.checked?selected.add(r.id):selected.delete(r.id));renderTable();}
+function toggleRow(id,e){if(e.target.type==='checkbox'){if(e.target.checked)selected.add(id);else selected.delete(id);renderTable();return;}if(selected.has(id))selected.delete(id);else selected.add(id);renderTable();}
+
+// ══ Filter ══
+function searchTable(){
+  const unit=document.getElementById('unit-value').value.trim();
+  const name=document.getElementById('f-search-name').value.trim();
+  const pid=document.getElementById('f-search-pid').value.trim();
+  filtered=dimensionRecords.filter(r=>{
+    const p=products.find(prod=>prod.id===r.productId);
+    if(!p)return false;
+    if(unit&&p.unit!==unit)return false;
+    if(name&&!p.name.includes(name))return false;
+    if(pid&&!p.id.includes(pid.toUpperCase()))return false;
+    return true;
+  });
+  currentPage=1;selected.clear();renderTable();
+}
+function resetFilter(){
+  document.getElementById('unit-value').value='';
+  document.getElementById('unit-display').textContent='请选择所属单位';
+  document.getElementById('unit-display').style.color='#bbb';
+  document.getElementById('f-search-name').value='';
+  document.getElementById('f-search-pid').value='';
+  filtered=[...dimensionRecords];currentPage=1;selected.clear();renderTable();
+}
+
+// ══ Actions ══
+let _confirmCallback=null;
+function showToast(msg,type='success'){
+  const t=document.getElementById('toast');
+  const icon=document.getElementById('toast-icon');
+  const msgEl=document.getElementById('toast-msg');
+  t.className='toast show '+type;
+  icon.textContent=type==='success'?'✓':type==='error'?'✕':'⚠';
+  msgEl.textContent=msg;
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+function showConfirm(title,body,icon,okCallback,okBtnText='确定',okBtnClass='btn-primary'){
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-body').innerHTML=body;
+  document.getElementById('confirm-icon').textContent=icon;
+  const okBtn=document.getElementById('confirm-ok-btn');
+  okBtn.textContent=okBtnText;
+  okBtn.className='btn '+okBtnClass;
+  _confirmCallback=okCallback;
+  document.getElementById('confirm-overlay').classList.add('show');
+}
+function closeConfirm(){
+  document.getElementById('confirm-overlay').classList.remove('show');
+  _confirmCallback=null;
+}
+function confirmOk(){
+  if(_confirmCallback)_confirmCallback();
+  closeConfirm();
+}
+function deleteSelected(){
+  if(!selected.size)return;
+  const names=filtered.filter(r=>selected.has(r.id)).map(r=>{
+    const p=products.find(prod=>prod.id===r.productId);
+    return p?p.name:r.productId;
+  });
+  const listHtml=`<div class="confirm-list">${names.map(n=>`<div class="confirm-list-item">• ${n}</div>`).join('')}</div>`;
+  showConfirm('确认删除',`即将删除以下 ${selected.size} 个定价维度配置：${listHtml}`,'🗑',()=>{
+    selected.forEach(id=>{const i=dimensionRecords.findIndex(r=>r.id===id);if(i>-1)dimensionRecords.splice(i,1);});
+    filtered=filtered.filter(r=>!selected.has(r.id));
+    selected.clear();renderTable();
+    showToast(`已删除 ${names.length} 个定价维度配置`,'success');
+  },'删除','btn-danger');
+}
+function editSelected(){
+  if(selected.size!==1)return;
+  openFormModal([...selected][0]);
+}
+
+// ══ Dimension tag render ══
+function renderDimTags(){
+  const container=document.getElementById('ff-dim-tags');
+  if(!container)return;
+  container.innerHTML=selectedDims.map(d=>`<span class="tag">${d}<span class="ms-del" onclick="removeDim('${d}')">×</span></span>`).join('');
+  document.getElementById('dim-count').textContent=selectedDims.length;
+}
+function removeDim(dim){
+  selectedDims=selectedDims.filter(d=>d!==dim);
+  const cb=document.querySelector(`#ff-preset input[value="${dim}"]`);
+  if(cb)cb.checked=false;
+  renderDimTags();
+}
+function onUnitChange(){
+  const unit=document.getElementById('ff-unit').value;
+  const sel=document.getElementById('ff-product');
+  if(!sel)return;
+  const usedProductIds=new Set(dimensionRecords.map(r=>r.productId));
+  const opts=products.filter(p=>p.unit===unit&&!usedProductIds.has(p.id)).map(p=>`<option value="${p.id}">${p.name}（${p.id}）</option>`).join('');
+  sel.innerHTML=`<option value="">请选择产品</option>${opts}`;
+}
+function addCustomDim(){
+  const input=document.getElementById('ff-custom');
+  const val=input.value.trim();
+  if(!val){showToast('请输入维度名称','warning');return;}
+  if(selectedDims.includes(val)){showToast('该维度已存在','warning');return;}
+  if(selectedDims.length>=MAX_DIMS){showToast(`最多可配置${MAX_DIMS}个定价维度`,'warning');return;}
+  selectedDims.push(val);
+  input.value='';
+  renderDimTags();
+}
+function onPresetChange(){
+  const checked=[...document.querySelectorAll('#ff-preset input:checked')].map(el=>el.value);
+  selectedDims=selectedDims.filter(d=>!PRESET_DIMS.includes(d)||checked.includes(d));
+  checked.forEach(d=>{if(!selectedDims.includes(d))selectedDims.push(d);});
+  renderDimTags();
+}
+
+// ══ Form Modal ══
+function openFormModal(editId){
+  selectedDims=[];
+  const isEdit=!!editId;
+  const record=isEdit?dimensionRecords.find(r=>r.id===editId):null;
+  document.getElementById('form-modal-title').textContent=isEdit?'修改定价维度':'新增定价维度';
+
+  const usedProductIds=new Set(dimensionRecords.filter(r=>r.id!==editId).map(r=>r.productId));
+  const productOpts=products.filter(p=>!usedProductIds.has(p.id)).map(p=>`<option value="${p.id}">${p.name}（${p.id}）</option>`).join('');
+
+  const presetChecks=PRESET_DIMS.map(d=>`<label><input type="checkbox" value="${d}" onchange="onPresetChange()">${d}</label>`).join('');
+
+  const unitOptions=isEdit
+    ?`<input id="ff-unit" value="${getOrgName(products.find(p=>p.id===record.productId)?.unit||'')}" readonly>`
+    :`<select id="ff-unit" onchange="onUnitChange()">
+        <option value="">请选择所属单位</option>
+        <option value="hq">总公司</option>
+        <option value="bj">北京分公司</option>
+        <option value="sh">上海分公司</option>
+        <option value="gz">广州分公司</option>
+        <option value="cd">成都分公司</option>
+        <option value="wh">武汉分公司</option>
+      </select>`;
+
+  document.getElementById('form-body').innerHTML=`
+    <div class="form-grid inline">
+      <div class="form-item"><label><span class="req">*</span>所属单位</label>
+        <div>
+          ${unitOptions}
+          <div class="err-msg" id="err-unit">请选择所属单位</div>
+        </div>
+      </div>
+      <div class="form-item"><label><span class="req">*</span>产品</label>
+        <div>
+          <select id="ff-product" ${isEdit?'disabled':''}>
+            <option value="">请选择产品</option>
+            ${isEdit?`<option value="${record.productId}" selected>${products.find(p=>p.id===record.productId)?.name||record.productId}</option>`:''}
+          </select>
+          <div class="err-msg" id="err-product">请选择产品</div>
+        </div>
+      </div>
+      <div class="form-item"><label>预设定价维度</label>
+        <div class="form-checkbox-group" id="ff-preset">${presetChecks}</div>
+      </div>
+      <div class="form-item">
+        <label>自定义定价维度</label>
+        <div>
+          <div class="dim-input-row">
+            <input id="ff-custom" placeholder="输入自定义维度名称" onkeydown="if(event.key==='Enter')addCustomDim()">
+            <button type="button" class="btn btn-default" onclick="addCustomDim()">＋ 添加</button>
+          </div>
+          <div class="tags-wrap" id="ff-dim-tags" style="margin-top:8px;min-height:24px"></div>
+          <div style="font-size:11px;color:#999;margin-top:4px">已配置 <span id="dim-count">0</span>/${MAX_DIMS} 个定价维度</div>
+          <div class="err-msg" id="err-dims">请至少配置一个定价维度</div>
+        </div>
+      </div>
+    </div>`;
+
+  if(isEdit&&record){
+    selectedDims=[...record.dimensions];
+    record.dimensions.forEach(d=>{
+      const cb=document.querySelector(`#ff-preset input[value="${d}"]`);
+      if(cb)cb.checked=true;
+    });
+    renderDimTags();
+  }
+
+  showModal('form-overlay','form-modal');
+  document.getElementById('form-modal')._editId=editId||null;
+}
+function closeFormModal(){hideModal('form-overlay','form-modal');selectedDims=[];}
+function saveForm(){
+  document.querySelectorAll('.form-item.error').forEach(el=>el.classList.remove('error'));
+  document.querySelectorAll('.err-msg.show').forEach(el=>el.classList.remove('show'));
+
+  const unitEl=document.getElementById('ff-unit');
+  const unit=unitEl.tagName==='SELECT'?unitEl.value:'';
+  const productId=document.getElementById('ff-product').value;
+  const m=document.getElementById('form-modal');
+  const isEdit=!!m._editId;
+  let hasError=false;
+  let firstError=null;
+
+  if(!isEdit&&!unit){
+    unitEl.closest('.form-item').classList.add('error');
+    document.getElementById('err-unit').classList.add('show');
+    if(!firstError)firstError=unitEl;
+    hasError=true;
+  }
+  if(!productId){
+    document.getElementById('ff-product').closest('.form-item').classList.add('error');
+    document.getElementById('err-product').classList.add('show');
+    if(!firstError)firstError=document.getElementById('ff-product');
+    hasError=true;
+  }
+  if(!selectedDims.length){
+    document.getElementById('ff-custom').closest('.form-item').classList.add('error');
+    document.getElementById('err-dims').classList.add('show');
+    if(!firstError)firstError=document.getElementById('ff-custom');
+    hasError=true;
+  }
+
+  if(hasError){
+    firstError.scrollIntoView({behavior:'smooth',block:'center'});
+    firstError.focus&&firstError.focus();
+    return;
+  }
+
+  const currentUser='管理员';
+  const currentTime=nowTime();
+  if(m._editId){
+    const editId=m._editId;
+    const record=dimensionRecords.find(r=>r.id===editId);
+    record.dimensions=[...selectedDims];
+    record.updater=currentUser;
+    record.updateTime=currentTime;
+    showToast('定价维度修改成功','success');
+  }else{
+    const maxN=dimensionRecords.reduce((m,r)=>Math.max(m,+(r.id.replace('D',''))||0),0);
+    const newId='D'+String(maxN+1).padStart(3,'0');
+    dimensionRecords.push({id:newId,productId,dimensions:[...selectedDims],creator:currentUser,createTime:currentTime,updater:currentUser,updateTime:currentTime});
+    showToast('定价维度新增成功','success');
+  }
+  filtered=[...dimensionRecords];closeFormModal();renderTable();
+}
+
+// ══ Modal helpers ══
+function showModal(ovId,boxId){
+  document.getElementById(ovId).style.display='block';
+  const m=document.getElementById(boxId);m.style.display='flex';
+}
+function hideModal(ovId,boxId){
+  document.getElementById(ovId).style.display='none';
+  document.getElementById(boxId).style.display='none';
+}
+
+// ══ Tree dropdown ══
+let treeOpen=false;
+function buildTree(nodes,depth=0){
+  return nodes.map(n=>{
+    const hasChild=n.children&&n.children.length>0;
+    const isOpen=depth<1&&hasChild;
+    return `<div>
+      <div class="tree-node ${hasChild?'has-child':''}" style="--depth:${depth};${hasChild?'color:#999;cursor:default;':''}" onclick="treeNodeClick('${n.id}','${n.name}',${hasChild},event)">
+        ${hasChild?`<span class="t-arrow ${isOpen?'open':''}" id="tarrow-${n.id}">›</span>`:'<span style="width:14px;flex-shrink:0"></span>'}
+        <span>${n.name}${hasChild?' (请选择下级单位)':''}</span>
+      </div>
+      ${hasChild?`<div class="tree-children ${isOpen?'open':''}" id="tchildren-${n.id}">${buildTree(n.children,depth+1)}</div>`:''}
+    </div>`;
+  }).join('');
+}
+function treeNodeClick(id,name,hasChild,e){
+  e.stopPropagation();
+  if(hasChild){
+    const ch=document.getElementById('tchildren-'+id);
+    const ar=document.getElementById('tarrow-'+id);
+    if(ch){ch.classList.toggle('open');ar&&ar.classList.toggle('open');}
+  } else {
+    document.getElementById('unit-value').value=id;
+    const d=document.getElementById('unit-display');
+    d.textContent=name;d.style.color='#333';
+    closeTree();
+  }
+}
+function toggleTree(e){
+  e.stopPropagation();
+  const popup=document.getElementById('tree-popup');
+  if(!popup.innerHTML){popup.innerHTML=buildTree(orgTree);}
+  const trigger=document.getElementById('unit-trigger');
+  const rect=trigger.getBoundingClientRect();
+  popup.style.top=(rect.bottom+4)+'px';
+  popup.style.left=rect.left+'px';
+  popup.classList.toggle('show');
+  treeOpen=popup.classList.contains('show');
+}
+function closeTree(){document.getElementById('tree-popup').classList.remove('show');treeOpen=false;}
+document.addEventListener('click',e=>{if(treeOpen&&!e.target.closest('#tree-popup')&&!e.target.closest('#unit-trigger'))closeTree();});
+
+// ══ Nav / Tabs ══
+function toggleNav(key){
+  const s=document.getElementById('sub-'+key),a=document.getElementById('arrow-'+key);
+  s.classList.toggle('open');a.classList.toggle('open');
+}
+const openTabs=['定价维度'];
+function switchTab(name){
+  if(!openTabs.includes(name)){
+    openTabs.push(name);
+    const t=document.createElement('div');
+    t.className='tab';t.id='tab-'+name;
+    t.innerHTML=`${name} <span class="close-x" onclick="removeTab('${name}',event)">×</span>`;
+    t.onclick=()=>activateTab(name);
+    document.getElementById('tabbar').appendChild(t);
+  }
+  activateTab(name);
+  document.querySelectorAll('.nav-sub-item').forEach(el=>el.classList.toggle('active',el.textContent.trim()===name));
+}
+function activateTab(name){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.id==='tab-'+name));}
+function removeTab(name,e){e&&e.stopPropagation();const t=document.getElementById('tab-'+name);if(t){t.remove();openTabs.splice(openTabs.indexOf(name),1);}}
+
+// ══ Init ══
+renderTable();
+</script>
+</body>
+</html>

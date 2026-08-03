@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>活跃度分析 — 运营管理系统</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;font-size:13px;background:#f0f2f5;display:flex;height:100vh;overflow:hidden;color:#333}
+/* Sidebar */
+.sidebar{width:188px;min-width:188px;background:#1a3a5c;color:#fff;display:flex;flex-direction:column;height:100vh;overflow-y:auto;flex-shrink:0}
+.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:2px}
+.sidebar-logo{padding:14px 16px 12px;background:#143050;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.sidebar-logo .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,#4096ff,#1677ff);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.sidebar-logo .brand{font-size:14px;font-weight:600;color:#fff;line-height:1.3}
+.nav-item{display:flex;align-items:center;gap:8px;padding:11px 16px;cursor:pointer;color:rgba(255,255,255,.78);transition:all .18s;font-size:13px}
+.nav-item:hover{background:rgba(64,150,255,.18);color:#fff}
+.nav-item.active{background:rgba(64,150,255,.25);color:#fff}
+.nav-item.parent{justify-content:space-between}
+.nav-item .icon{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.nav-sub{overflow:hidden;max-height:0;transition:max-height .28s ease;background:rgba(0,0,0,.18)}
+.nav-sub.open{max-height:600px}
+.nav-sub-item{display:block;padding:9px 16px 9px 42px;color:rgba(255,255,255,.62);cursor:pointer;font-size:12px;transition:all .18s}
+.nav-sub-item:hover{color:#fff;background:rgba(64,150,255,.15)}
+.nav-sub-item.active{color:#69b1ff;background:rgba(64,150,255,.22);font-weight:500}
+.arrow{font-size:11px;transition:transform .28s;color:rgba(255,255,255,.45)}
+.arrow.open{transform:rotate(90deg)}
+/* Main */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{background:#fff;padding:0 16px;height:46px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e8e8e8;flex-shrink:0}
+.breadcrumb{display:flex;align-items:center;gap:5px;color:#888;font-size:12px}
+.breadcrumb .sep{color:#d9d9d9}
+.breadcrumb .cur{color:#1677ff}
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.topbar-icon{width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:50%;color:#888;font-size:14px}
+.topbar-icon:hover{background:#f0f2f5}
+.avatar{width:28px;height:28px;background:#1677ff;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;cursor:pointer;font-weight:600}
+.tabbar{background:#fff;border-bottom:1px solid #e8e8e8;display:flex;overflow-x:auto;flex-shrink:0;min-height:36px}
+.tabbar::-webkit-scrollbar{height:2px}
+.tab{display:flex;align-items:center;gap:5px;padding:7px 14px;cursor:pointer;border-right:1px solid #f0f0f0;white-space:nowrap;color:#777;border-bottom:2px solid transparent;flex-shrink:0;font-size:12px}
+.tab:hover{background:#fafafa;color:#333}
+.tab.active{color:#1677ff;border-bottom-color:#1677ff}
+.tab .close-x{font-size:11px;opacity:.45;margin-left:1px;line-height:1}
+.tab .close-x:hover{opacity:1;color:#f00}
+/* Content */
+.content{flex:1;padding:12px 14px;overflow:auto;display:flex;flex-direction:column;gap:10px}
+.card{background:#fff;border-radius:6px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+/* Filter */
+.filter-row{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap}
+.field{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.field label{white-space:nowrap;color:#666;font-size:12px;flex-shrink:0}
+.field input,.field select,.field .tree-trigger{height:30px;border:1px solid #d9d9d9;border-radius:4px;padding:0 8px;font-size:12px;outline:none;color:#333;background:#fff;min-width:0}
+.field input:focus,.field select:focus{border-color:#1677ff;box-shadow:0 0 0 2px rgba(22,119,255,.1)}
+.field-unit{flex:0 0 auto}.field-unit .tree-trigger{width:180px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:4px;user-select:none}
+.field-name input{width:150px}
+/* Date range */
+.date-range-row{display:flex;align-items:center;gap:6px}
+.date-range-row input{flex:1;min-width:0}
+.date-range-row .date-sep{color:#999;font-size:12px}
+/* Register time */
+.reg-time-row{display:flex;align-items:center;gap:6px}
+.reg-time-row input{flex:1;min-width:0}
+.reg-time-row .date-sep{color:#999;font-size:12px}
+/* Checkbox group */
+.chk-group-inline{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:5px 0}
+.chk-group-inline label{display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;color:#333}
+.chk-group-inline input[type="checkbox"]{accent-color:#1677ff;cursor:pointer;width:14px;height:14px}
+/* Buttons */
+.btn{height:32px;padding:0 16px;border:none;border-radius:4px;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:4px;transition:all .18s;white-space:nowrap}
+.btn-primary{background:#1677ff;color:#fff}
+.btn-primary:hover{background:#4096ff}
+.btn-default{background:#fff;color:#555;border:1px solid #d9d9d9}
+.btn-default:hover:not(:disabled){color:#1677ff;border-color:#1677ff}
+.btn-danger{background:#ff4d4f;color:#fff;border:1px solid #ff4d4f}
+.btn-danger:hover:not(:disabled){background:#ff7875}
+.btn-reset{background:#fff;color:#666;border:1px solid #d9d9d9}
+.btn-reset:hover{background:#f5f5f5}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-sm{height:26px;padding:0 10px;font-size:12px}
+/* Table */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;table-layout:auto}
+thead th{background:#f5f8ff;padding:9px 10px;text-align:left;font-weight:600;color:#4a5568;font-size:12px;border-bottom:2px solid #dce8ff;white-space:nowrap;position:sticky;top:0;z-index:2}
+th.col-op,td.col-op{position:sticky;right:0;z-index:3;background:#f5f8ff;box-shadow:-3px 0 6px rgba(0,0,0,.06)}
+td.col-op{background:#fff}
+tbody tr:hover td.col-op{background:#f0f6ff}
+tbody td{padding:8px 10px;border-bottom:1px solid #f0f3fa;color:#333;font-size:12px;vertical-align:middle}
+tbody tr:hover{background:#f0f6ff}
+tbody tr.selected{background:#e6f4ff}
+.op-link{color:#1677ff;cursor:pointer;font-size:12px}
+.op-link:hover{text-decoration:underline}
+/* Pagination */
+.pager{display:flex;align-items:center;gap:5px;padding-top:10px;border-top:1px solid #f0f0f0;margin-top:4px;flex-wrap:wrap}
+.pager .total{color:#666;font-size:12px;margin-right:4px}
+.pager select{height:26px;border:1px solid #d9d9d9;border-radius:4px;padding:0 4px;font-size:12px}
+.pager .pg-btn{min-width:28px;height:28px;border:1px solid #d9d9d9;background:#fff;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:#555}
+.pager .pg-btn:hover,.pager .pg-btn.active{background:#1677ff;color:#fff;border-color:#1677ff}
+.pager .pg-btn:disabled{opacity:.35;cursor:default;pointer-events:none}
+.pager .jumper{display:flex;align-items:center;gap:4px;font-size:12px;color:#666;margin-left:4px}
+.pager .jumper input{width:42px;height:26px;border:1px solid #d9d9d9;border-radius:4px;text-align:center;font-size:12px;outline:none}
+/* Tree dropdown */
+.tree-popup{position:fixed;background:#fff;border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:2000;padding:6px 0;min-width:220px;max-height:320px;overflow-y:auto;display:none}
+.tree-popup.show{display:block}
+.tree-node{padding:7px 12px 7px calc(12px + var(--depth)*16px);cursor:pointer;display:flex;align-items:center;gap:5px;font-size:12px;color:#333}
+.tree-node:hover{background:#f0f6ff;color:#1677ff}
+.tree-node.has-child:hover{background:#fafafa;color:#999}
+.tree-node.selected{color:#1677ff;background:#e6f4ff}
+.tree-node .t-arrow{font-size:10px;color:#bbb;transition:transform .2s;flex-shrink:0}
+.tree-node .t-arrow.open{transform:rotate(90deg)}
+.tree-children{overflow:hidden;max-height:0;transition:max-height .2s}
+.tree-children.open{max-height:500px}
+/* Toast */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#fff;border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:12px 20px;z-index:3000;display:none;align-items:center;gap:10px;font-size:13px}
+.toast.show{display:flex;animation:slideDown .3s}
+.toast.success{border-color:#52c41a;background:#f6ffed}
+.toast.error{border-color:#ff4d4f;background:#fff1f0}
+.toast.warning{border-color:#faad14;background:#fffbe6}
+.toast-icon{font-size:16px}
+@keyframes slideDown{from{opacity:0;transform:translate(-50%,-20px)}to{opacity:1;transform:translate(-50%,0)}}
+/* Condition row */
+.condition-area{background:#fafbfc;border:1px dashed #d9d9d9;border-radius:6px;padding:12px 14px;margin-top:8px}
+.condition-desc{color:#666;font-size:12px;margin-bottom:10px}
+.condition-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.condition-row .logic-label{color:#1677ff;font-size:12px;font-weight:600;min-width:24px}
+.condition-row select,.condition-row input{height:30px;border:1px solid #d9d9d9;border-radius:4px;padding:0 8px;font-size:12px;outline:none;color:#333;background:#fff}
+.condition-row select:focus,.condition-row input:focus{border-color:#1677ff;box-shadow:0 0 0 2px rgba(22,119,255,.1)}
+.condition-row .cond-type{width:100px}
+.condition-row .cond-symbol{width:70px}
+.condition-row .cond-value{width:100px}
+.condition-row .cond-del{color:#ff4d4f;cursor:pointer;font-size:14px;padding:4px}
+.condition-row .cond-del:hover{color:#ff7875}
+.condition-btns{display:flex;gap:8px;margin-top:6px}
+/* ── Drawer ── */
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:998;display:none;opacity:0;transition:opacity .3s}
+.drawer-overlay.show{display:block;opacity:1}
+.drawer{position:fixed;top:0;right:0;bottom:0;left:188px;background:#f0f2f5;z-index:999;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .35s ease}
+.drawer.show{transform:translateX(0)}
+.drawer-hd{background:#fff;padding:12px 16px;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.drawer-hd .drawer-title{font-size:14px;font-weight:600;color:#1a3a5c;flex:1}
+.drawer-bd{flex:1;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.drawer-close{font-size:20px;color:#bbb;cursor:pointer;line-height:1;padding:0 4px}
+.drawer-close:hover{color:#666}
+/* Detail info in drawer */
+.detail-info{color:#333;font-size:13px;font-weight:500}
+.detail-info span{color:#1677ff}
+</style>
+</head>
+<body>
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">运</div>
+    <div class="brand">运营管理系统</div>
+  </div>
+          <nav id="nav">
+    <div class="nav-item" onclick="location.href='index.html'"><span class="icon">🏠</span>首页</div>
+    <div class="nav-item parent" onclick="toggleNav('product')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">📦</span>产品管理</span>
+      <span class="arrow" id="arrow-product">›</span>
+    </div>
+    <div class="nav-sub" id="sub-product">
+      <div class="nav-sub-item" onclick="location.href='产品池.html'">产品池</div>
+      <div class="nav-sub-item" onclick="location.href='定价维度.html'">定价维度</div>
+      <div class="nav-sub-item" onclick="location.href='产品定价.html'">产品定价</div>
+      <div class="nav-sub-item" onclick="location.href='产品分配.html'">产品分配</div>
+      <div class="nav-sub-item">申请跨区推广</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('client')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">⚙️</span>客户端配置</span>
+      <span class="arrow" id="arrow-client">›</span>
+    </div>
+    <div class="nav-sub" id="sub-client">
+      <div class="nav-sub-item" onclick="location.href='客户端配置-一级菜单.html'">一级菜单</div>
+      <div class="nav-sub-item">工作台</div>
+      <div class="nav-sub-item" onclick="location.href='客户端配置-财税业务.html'">财税业务</div>
+      <div class="nav-sub-item">服务培训</div>
+      <div class="nav-sub-item">应用市场</div>
+      <div class="nav-sub-item">常用工具</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('equity')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">🏢</span>权益配置</span>
+      <span class="arrow" id="arrow-equity">›</span>
+    </div>
+    <div class="nav-sub" id="sub-equity">
+      <div class="nav-sub-item" onclick="location.href='权益配置.html'">权益配置</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('salecfg')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">📄</span>销售配置</span>
+      <span class="arrow" id="arrow-salecfg">›</span>
+    </div>
+    <div class="nav-sub" id="sub-salecfg">
+      <div class="nav-sub-item">协议模板</div>
+      <div class="nav-sub-item" onclick="location.href='支付配置.html'">支付配置</div>
+      <div class="nav-sub-item">开票配置</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('sales')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">💰</span>销售中心</span>
+      <span class="arrow" id="arrow-sales">›</span>
+    </div>
+    <div class="nav-sub" id="sub-sales">
+      <div class="nav-sub-item" onclick="location.href='订单管理.html'">订单管理</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('analysis')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">📊</span>统计分析</span>
+      <span class="arrow" id="arrow-analysis">›</span>
+    </div>
+    <div class="nav-sub" id="sub-analysis">
+      <div class="nav-sub-item" onclick="location.href='一户式视图.html'">一户式视图</div>
+      <div class="nav-sub-item active" onclick="location.href='活跃度分析.html'">活跃度分析</div>
+      <div class="nav-sub-item" onclick="location.href='应用分析.html'">应用分析</div>
+      <div class="nav-sub-item" onclick="location.href='销售统计.html'">销售统计</div>
+    </div>
+    <div class="nav-item"><span class="icon">👥</span>用户中心</div>
+    <div class="nav-item"><span class="icon">💬</span>消息中心</div>
+  </nav>
+</aside>
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <div class="breadcrumb">
+      <span>首页</span><span class="sep">/</span>
+      <span>产品运营</span><span class="sep">/</span>
+      <span class="cur">活跃度分析</span>
+    </div>
+    <div class="topbar-actions">
+      <div class="topbar-icon" title="搜索">🔍</div>
+      <div class="topbar-icon" title="帮助">❓</div>
+      <div class="topbar-icon" title="全屏">⛶</div>
+      <div class="avatar" title="管理员">管</div>
+    </div>
+  </div>
+  <div class="tabbar" id="tabbar">
+    <div class="tab">首页</div>
+    <div class="tab active" id="tab-活跃度分析">活跃度分析 <span class="close-x" onclick="removeTab('活跃度分析',event)">×</span></div>
+  </div>
+  <div class="content">
+    <!-- 主页 -->
+    <div id="view-home">
+      <!-- Filter -->
+      <div class="card">
+        <div class="filter-row">
+          <div class="field field-unit">
+            <label>所属单位</label>
+            <div class="tree-trigger" id="unit-trigger-home" onclick="toggleTree(event,'home')" tabindex="0">
+              <span id="unit-display-home" style="color:#bbb;font-size:12px">请选择所属单位</span>
+              <span style="font-size:10px;color:#bbb">▼</span>
+            </div>
+            <input type="hidden" id="unit-value-home">
+          </div>
+          <div class="field">
+            <label>查询时间范围</label>
+            <select id="time-type-home" onchange="onTimeTypeChange('home')">
+              <option value="day">按日</option>
+              <option value="month">按月</option>
+              <option value="year">按年</option>
+            </select>
+          </div>
+          <div class="field date-range-row">
+            <input type="date" id="start-date-home">
+            <span class="date-sep">至</span>
+            <input type="date" id="end-date-home">
+          </div>
+          <div class="field">
+            <label>注册时间</label>
+            <div class="reg-time-row">
+              <input type="date" id="reg-start-home">
+              <span class="date-sep">至</span>
+              <input type="date" id="reg-end-home">
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="searchHome()">🔍 搜索</button>
+          <button class="btn btn-reset" onclick="resetHome()">↺ 重置</button>
+        </div>
+        <div class="filter-row">
+          <div class="field">
+            <label>产品</label>
+            <select id="product-home">
+              <option value="">请选择产品</option>
+              <option value="PRD001">云端记账平台</option>
+              <option value="PRD002">企业安全卫士</option>
+              <option value="PRD003">增值税申报助手</option>
+              <option value="PRD004">电子发票云平台</option>
+              <option value="PRD005">工商年报通</option>
+            </select>
+          </div>
+          <div class="field" style="align-items:flex-start">
+            <label>操作端类型</label>
+            <div class="chk-group-inline">
+              <label><input type="checkbox" value="client" checked> 客户端</label>
+              <label><input type="checkbox" value="web" checked> Web端</label>
+              <label><input type="checkbox" value="app" checked> APP</label>
+              <label><input type="checkbox" value="miniapp" checked> 小程序</label>
+            </div>
+          </div>
+        </div>
+        <!-- 行为条件 -->
+        <div style="margin-top:14px;border-top:1px dashed #e8e8e8;padding-top:12px">
+          <div class="condition-desc">满足下列条件（规则运算顺序：按添加条件的顺序，从左至右依次计算）</div>
+          <div id="condition-list-home"></div>
+          <div class="condition-btns">
+            <button class="btn btn-default btn-sm" onclick="addCondition('home','and')">＋ 添加"且"条件</button>
+            <button class="btn btn-default btn-sm" onclick="addCondition('home','or')">＋ 添加"或"条件</button>
+          </div>
+        </div>
+      </div>
+      <!-- Tree dropdown (home) -->
+      <div class="tree-popup" id="tree-popup-home"></div>
+      <!-- Table -->
+      <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;padding-bottom:0">
+        <div class="tbl-wrap" style="flex:1;overflow:auto">
+          <table id="table-home">
+            <thead>
+              <tr>
+                <th style="width:46px">序号</th>
+                <th>所属单位</th>
+                <th>活跃用户数</th>
+                <th>活跃度</th>
+                <th class="col-op" style="width:80px">操作</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-home"></tbody>
+          </table>
+        </div>
+        <div class="pager" id="pager-home" style="padding:10px 0 12px;flex-shrink:0"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Drawer 明细页 ══ -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-hd">
+    <button class="btn btn-default" onclick="closeDrawer()">← 返回</button>
+    <div class="drawer-title" id="drawer-title">活跃用户明细</div>
+    <span class="drawer-close" onclick="closeDrawer()">×</span>
+  </div>
+  <div class="drawer-bd">
+    <div class="detail-info" id="drawer-info">当前查看：<span>—</span> - 活跃用户</div>
+    <!-- Filter -->
+    <div class="card">
+      <div class="filter-row">
+        <div class="field field-name">
+          <label>企业名称</label>
+          <input type="text" id="detail-ent-name" placeholder="请输入企业名称">
+        </div>
+        <div class="field">
+          <label>纳税人识别号</label>
+          <input type="text" id="detail-tax-no" placeholder="请输入纳税人识别号">
+        </div>
+        <div class="field">
+          <label>手机号</label>
+          <input type="text" id="detail-phone" placeholder="请输入手机号">
+        </div>
+        <div class="field">
+          <label>企业状态</label>
+          <select id="detail-status">
+            <option value="">全部</option>
+            <option value="normal">正常</option>
+            <option value="cancelled">注销</option>
+          </select>
+        </div>
+      </div>
+      <div class="filter-row">
+        <div class="field">
+          <label>客户经理</label>
+          <input type="text" id="detail-manager" placeholder="请输入客户经理">
+        </div>
+        <div class="field">
+          <label>客户经理手机号</label>
+          <input type="text" id="detail-manager-phone" placeholder="请输入客户经理手机号">
+        </div>
+        <button class="btn btn-primary" onclick="searchDetail()">🔍 搜索</button>
+        <button class="btn btn-reset" onclick="resetDetail()">↺ 重置</button>
+        <button class="btn btn-default" onclick="exportDetail(false)">📥 导出</button>
+        <button class="btn btn-default" onclick="exportDetail(true)">📥 导出（含手机号）</button>
+      </div>
+    </div>
+    <!-- Table -->
+    <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;padding-bottom:0">
+      <div class="tbl-wrap" style="flex:1;overflow:auto">
+        <table id="table-detail">
+          <thead>
+            <tr>
+              <th style="width:46px">序号</th>
+              <th>所属单位</th>
+              <th>纳税人识别号</th>
+              <th>企业名称</th>
+              <th>企业状态</th>
+              <th>管理员手机号</th>
+              <th>活跃分数</th>
+              <th>今年登录次数</th>
+              <th>最后一次登录手机号</th>
+              <th>客户经理</th>
+              <th>客户经理手机号</th>
+              <th class="col-op" style="width:80px">操作</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-detail"></tbody>
+        </table>
+      </div>
+      <div class="pager" id="pager-detail" style="padding:10px 0 12px;flex-shrink:0"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toast-icon"></span>
+  <span id="toast-msg"></span>
+</div>
+<script>
+// 机构树
+const orgTree=[
+  {id:'hq',name:'总公司',children:[
+    {id:'bj',name:'北京分公司',children:[{id:'bj-dc',name:'东城区',children:[]},{id:'bj-xc',name:'西城区',children:[]},{id:'bj-cy',name:'朝阳区',children:[]},{id:'bj-hp',name:'海淀区',children:[]}]},
+    {id:'sh',name:'上海分公司',children:[{id:'sh-hp',name:'黄浦区',children:[]},{id:'sh-jg',name:'静安区',children:[]},{id:'sh-pd',name:'浦东新区',children:[]}]},
+    {id:'gz',name:'广州分公司',children:[{id:'gz-th',name:'天河区',children:[]},{id:'gz-yh',name:'越秀区',children:[]},{id:'gz-hw',name:'黄埔区',children:[]}]},
+    {id:'cd',name:'成都分公司',children:[{id:'cd-jj',name:'锦江区',children:[]},{id:'cd-qt',name:'青羊区',children:[]},{id:'cd-wd',name:'武侯区',children:[]}]},
+    {id:'wh',name:'武汉分公司',children:[{id:'wh-jh',name:'江汉区',children:[]},{id:'wh-wc',name:'武昌区',children:[]},{id:'wh-hk',name:'洪山区',children:[]}]}
+  ]}
+];
+const orgMap={};
+function buildOrgMap(nodes){nodes.forEach(n=>{orgMap[n.id]=n.name;if(n.children)buildOrgMap(n.children);});}
+buildOrgMap(orgTree[0].children.concat([orgTree[0]]));
+function getOrgName(id){return orgMap[id]||id;}
+
+// Mock 主页数据
+const homeData=[
+  {id:'H001',unit:'bj',activeUsers:1245,rate:'78.5%'},
+  {id:'H002',unit:'sh',activeUsers:982,rate:'65.2%'},
+  {id:'H003',unit:'gz',activeUsers:756,rate:'58.3%'},
+  {id:'H004',unit:'cd',activeUsers:621,rate:'52.1%'},
+  {id:'H005',unit:'wh',activeUsers:534,rate:'48.7%'},
+  {id:'H006',unit:'bj-dc',activeUsers:312,rate:'81.2%'},
+  {id:'H007',unit:'bj-xc',activeUsers:298,rate:'76.4%'},
+  {id:'H008',unit:'bj-cy',activeUsers:356,rate:'79.1%'},
+  {id:'H009',unit:'bj-hp',activeUsers:279,rate:'74.5%'},
+  {id:'H010',unit:'sh-hp',activeUsers:245,rate:'68.3%'},
+  {id:'H011',unit:'sh-jg',activeUsers:198,rate:'61.2%'},
+  {id:'H012',unit:'sh-pd',activeUsers:312,rate:'70.5%'},
+];
+
+// Mock 明细数据
+const detailData=[
+  {id:'D001',unit:'bj',taxNo:'91110108MA00XXXX01',entName:'北京智慧科技有限公司',status:'normal',adminPhone:'13800138001',score:92,loginCount:45,lastLoginPhone:'13800138001',manager:'张经理',managerPhone:'13900139001'},
+  {id:'D002',unit:'bj',taxNo:'91110108MA00XXXX02',entName:'北京云端网络有限公司',status:'normal',adminPhone:'13800138002',score:85,loginCount:38,lastLoginPhone:'13800138002',manager:'李经理',managerPhone:'13900139002'},
+  {id:'D003',unit:'bj',taxNo:'91110108MA00XXXX03',entName:'北京创新软件有限公司',status:'cancelled',adminPhone:'13800138003',score:12,loginCount:3,lastLoginPhone:'13800138003',manager:'王经理',managerPhone:'13900139003'},
+  {id:'D004',unit:'bj',taxNo:'91110108MA00XXXX04',entName:'北京未来数据有限公司',status:'normal',adminPhone:'13800138004',score:76,loginCount:32,lastLoginPhone:'13800138004',manager:'赵经理',managerPhone:'13900139004'},
+  {id:'D005',unit:'bj',taxNo:'91110108MA00XXXX05',entName:'北京星辰科技公司',status:'normal',adminPhone:'13800138005',score:88,loginCount:41,lastLoginPhone:'13800138005',manager:'张经理',managerPhone:'13900139001'},
+  {id:'D006',unit:'sh',taxNo:'91310115MA00YYYY01',entName:'上海东方贸易有限公司',status:'normal',adminPhone:'13800138006',score:72,loginCount:28,lastLoginPhone:'13800138006',manager:'陈经理',managerPhone:'13900139005'},
+  {id:'D007',unit:'sh',taxNo:'91310115MA00YYYY02',entName:'上海先锋科技有限公司',status:'normal',adminPhone:'13800138007',score:81,loginCount:35,lastLoginPhone:'13800138007',manager:'刘经理',managerPhone:'13900139006'},
+  {id:'D008',unit:'sh',taxNo:'91310115MA00YYYY03',entName:'上海远景咨询有限公司',status:'cancelled',adminPhone:'13800138008',score:8,loginCount:1,lastLoginPhone:'13800138008',manager:'陈经理',managerPhone:'13900139005'},
+  {id:'D009',unit:'gz',taxNo:'91440106MA00ZZZZ01',entName:'广州南方制造有限公司',status:'normal',adminPhone:'13800138009',score:65,loginCount:22,lastLoginPhone:'13800138009',manager:'黄经理',managerPhone:'13900139007'},
+  {id:'D010',unit:'gz',taxNo:'91440106MA00ZZZZ02',entName:'广州珠江贸易有限公司',status:'normal',adminPhone:'13800138010',score:58,loginCount:18,lastLoginPhone:'13800138010',manager:'黄经理',managerPhone:'13900139007'},
+  {id:'D011',unit:'cd',taxNo:'91510107MA00WWWW01',entName:'成都西部科技有限公司',status:'normal',adminPhone:'13800138011',score:71,loginCount:27,lastLoginPhone:'13800138011',manager:'周经理',managerPhone:'13900139008'},
+  {id:'D012',unit:'wh',taxNo:'91420103MA00VVVV01',entName:'武汉长江信息有限公司',status:'normal',adminPhone:'13800138012',score:63,loginCount:21,lastLoginPhone:'13800138012',manager:'吴经理',managerPhone:'13900139009'},
+];
+
+// State
+let homePage=1,homeSize=10,homeFiltered=[...homeData];
+let detailPage=1,detailSize=10,detailFiltered=[...detailData];
+let currentDetailUnit='';
+let condCounter=0;
+const conditions={home:[]};
+
+// 日期类型切换
+function onTimeTypeChange(view){
+  const type=document.getElementById('time-type-'+view).value;
+  const start=document.getElementById('start-date-'+view);
+  const end=document.getElementById('end-date-'+view);
+  if(type==='year'){start.type='month';end.type='month';}
+  else if(type==='month'){start.type='month';end.type='month';}
+  else{start.type='date';end.type='date';}
+}
+
+// 条件行渲染
+function renderConditions(view){
+  const list=document.getElementById('condition-list-'+view);
+  const arr=conditions[view]||[];
+  if(arr.length===0){list.innerHTML='';return;}
+  list.innerHTML=arr.map((c,i)=>`
+    <div class="condition-row" id="cond-${view}-${c.id}">
+      ${i>0?`<span class="logic-label">${c.logic==='and'?'且':'或'}</span>`:''}
+      <select class="cond-type" onchange="updateCondType('${view}',${c.id},this.value)">
+        <option value="login" ${c.type==='login'?'selected':''}>登录</option>
+        <option value="use" ${c.type==='use'?'selected':''}>使用</option>
+      </select>
+      <select class="cond-symbol" onchange="updateCondSymbol('${view}',${c.id},this.value)">
+        <option value=">=" ${c.symbol==='>='?'selected':''}>>=</option>
+        <option value=">" ${c.symbol==='>'?'selected':''}>></option>
+        <option value="=" ${c.symbol==='='?'selected':''}>=</option>
+        <option value="<=" ${c.symbol==='<='?'selected':''}><=</option>
+        <option value="<" ${c.symbol==='<'?'selected':''}><</option>
+      </select>
+      <input type="number" class="cond-value" placeholder="次数" value="${c.value||''}" oninput="updateCondValue('${view}',${c.id},this.value)">
+      <span class="cond-del" onclick="removeCondition('${view}',${c.id})">✕</span>
+    </div>
+  `).join('');
+}
+
+function addCondition(view,logic){
+  condCounter++;
+  if(!conditions[view])conditions[view]=[];
+  conditions[view].push({id:condCounter,logic:conditions[view].length===0?'':logic,type:'login',symbol:'>=',value:''});
+  renderConditions(view);
+}
+function removeCondition(view,id){
+  if(!conditions[view])return;
+  conditions[view]=conditions[view].filter(c=>c.id!==id);
+  if(conditions[view].length>0)conditions[view][0].logic='';
+  renderConditions(view);
+}
+function updateCondType(view,id,val){const c=(conditions[view]||[]).find(x=>x.id===id);if(c)c.type=val;}
+function updateCondSymbol(view,id,val){const c=(conditions[view]||[]).find(x=>x.id===id);if(c)c.symbol=val;}
+function updateCondValue(view,id,val){const c=(conditions[view]||[]).find(x=>x.id===id);if(c)c.value=val;}
+
+// 主页表格
+function renderHomeTable(){
+  const start=(homePage-1)*homeSize;
+  const rows=homeFiltered.slice(start,start+homeSize);
+  document.getElementById('tbody-home').innerHTML=rows.map((r,i)=>`
+    <tr>
+      <td style="color:#999;text-align:center">${start+i+1}</td>
+      <td>${getOrgName(r.unit)}</td>
+      <td style="font-weight:500">${r.activeUsers}</td>
+      <td>${r.rate}</td>
+      <td class="col-op" style="white-space:nowrap">
+        <span class="op-link" onclick="openDrawer('${r.unit}')">查看详情</span>
+      </td>
+    </tr>
+  `).join('');
+  renderPager('pager-home',homeFiltered.length,homePage,homeSize,(p)=>{homePage=p;renderHomeTable();},(s)=>{homeSize=s;homePage=1;renderHomeTable();});
+}
+
+function searchHome(){
+  const unit=document.getElementById('unit-value-home').value.trim();
+  homeFiltered=homeData.filter(r=>{
+    if(unit&&r.unit!==unit)return false;
+    return true;
+  });
+  homePage=1;renderHomeTable();
+}
+function resetHome(){
+  document.getElementById('unit-value-home').value='';
+  document.getElementById('unit-display-home').textContent='请选择所属单位';
+  document.getElementById('unit-display-home').style.color='#bbb';
+  document.getElementById('time-type-home').value='day';
+  onTimeTypeChange('home');
+  document.getElementById('start-date-home').value='';
+  document.getElementById('end-date-home').value='';
+  document.getElementById('product-home').value='';
+  document.querySelectorAll('#view-home .chk-group-inline input').forEach(cb=>cb.checked=true);
+  document.getElementById('reg-start-home').value='';
+  document.getElementById('reg-end-home').value='';
+  conditions.home=[];
+  renderConditions('home');
+  homeFiltered=[...homeData];homePage=1;renderHomeTable();
+}
+
+// 明细页表格
+function renderDetailTable(){
+  const start=(detailPage-1)*detailSize;
+  const rows=detailFiltered.slice(start,start+detailSize);
+  document.getElementById('tbody-detail').innerHTML=rows.map((r,i)=>`
+    <tr>
+      <td style="color:#999;text-align:center">${start+i+1}</td>
+      <td>${getOrgName(r.unit)}</td>
+      <td>${r.taxNo}</td>
+      <td>${r.entName}</td>
+      <td>${r.status==='normal'?'<span style="color:#52c41a">正常</span>':'<span style="color:#999">注销</span>'}</td>
+      <td>${r.adminPhone}</td>
+      <td style="font-weight:500">${r.score}</td>
+      <td>${r.loginCount}</td>
+      <td>${r.lastLoginPhone}</td>
+      <td>${r.manager}</td>
+      <td>${r.managerPhone}</td>
+      <td class="col-op" style="white-space:nowrap">
+        <span class="op-link">查看详情</span>
+      </td>
+    </tr>
+  `).join('');
+  renderPager('pager-detail',detailFiltered.length,detailPage,detailSize,(p)=>{detailPage=p;renderDetailTable();},(s)=>{detailSize=s;detailPage=1;renderDetailTable();});
+}
+
+function searchDetail(){
+  const entName=document.getElementById('detail-ent-name').value.trim();
+  const taxNo=document.getElementById('detail-tax-no').value.trim();
+  const phone=document.getElementById('detail-phone').value.trim();
+  const status=document.getElementById('detail-status').value;
+  const manager=document.getElementById('detail-manager').value.trim();
+  const managerPhone=document.getElementById('detail-manager-phone').value.trim();
+  detailFiltered=detailData.filter(r=>{
+    if(currentDetailUnit&&r.unit!==currentDetailUnit)return false;
+    if(entName&&!r.entName.includes(entName))return false;
+    if(taxNo&&!r.taxNo.includes(taxNo))return false;
+    if(phone&&!r.adminPhone.includes(phone))return false;
+    if(status&&r.status!==status)return false;
+    if(manager&&!r.manager.includes(manager))return false;
+    if(managerPhone&&!r.managerPhone.includes(managerPhone))return false;
+    return true;
+  });
+  detailPage=1;renderDetailTable();
+}
+function resetDetail(){
+  document.getElementById('detail-ent-name').value='';
+  document.getElementById('detail-tax-no').value='';
+  document.getElementById('detail-phone').value='';
+  document.getElementById('detail-status').value='';
+  document.getElementById('detail-manager').value='';
+  document.getElementById('detail-manager-phone').value='';
+  detailFiltered=detailData.filter(r=>!currentDetailUnit||r.unit===currentDetailUnit);
+  detailPage=1;renderDetailTable();
+}
+function exportDetail(withPhone){
+  showToast(`已发起${withPhone?'含手机号的':''}导出任务`,'success');
+}
+
+// 抽屉
+function openDrawer(unit){
+  currentDetailUnit=unit;
+  document.getElementById('drawer-info').innerHTML=`当前查看：<span>${getOrgName(unit)}</span> - 活跃用户`;
+  document.getElementById('drawer-title').textContent=`${getOrgName(unit)} - 活跃用户明细`;
+  detailFiltered=detailData.filter(r=>r.unit===unit);
+  detailPage=1;renderDetailTable();
+  document.getElementById('drawer-overlay').classList.add('show');
+  document.getElementById('drawer').classList.add('show');
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('show');
+  document.getElementById('drawer-overlay').classList.remove('show');
+  currentDetailUnit='';
+}
+
+// 分页组件
+function renderPager(elId,total,page,size,onPage,onSize){
+  const pages=Math.ceil(total/size)||1;
+  let h=`<span class="total">共 ${total} 条</span>
+    <select onchange="${onSize.name}(+this.value)">${[10,20,50].map(n=>`<option ${size==n?'selected':''}>${n}条/页</option>`).join('')}</select>`;
+  h+=`<button class="pg-btn" onclick="${onPage.name}(${page-1})" ${page===1?'disabled':''}>‹</button>`;
+  let arr=[];
+  if(pages<=7){for(let i=1;i<=pages;i++)arr.push(i);}
+  else{arr=[1];if(page>3)arr.push('…');for(let i=Math.max(2,page-1);i<=Math.min(pages-1,page+1);i++)arr.push(i);if(page<pages-2)arr.push('…');arr.push(pages);}
+  arr.forEach(p=>{h+=p==='…'?`<span style="padding:0 3px;color:#bbb">…</span>`:`<button class="pg-btn ${p===page?'active':''}" onclick="${onPage.name}(${p})">${p}</button>`;});
+  h+=`<button class="pg-btn" onclick="${onPage.name}(${page+1})" ${page===pages?'disabled':''}>›</button>`;
+  h+=`<span class="jumper">前往<input type="number" min="1" max="${pages}" onkeydown="if(event.key==='Enter')${onPage.name}(+this.value)">页</span>`;
+  document.getElementById(elId).innerHTML=h;
+}
+
+// 树形下拉
+let treeOpenHome=false;
+function buildTree(nodes,depth=0){
+  return nodes.map(n=>{
+    const hasChild=n.children&&n.children.length>0;
+    const isOpen=depth<1&&hasChild;
+    return `<div>
+      <div class="tree-node ${hasChild?'has-child':''}" style="--depth:${depth};${hasChild?'color:#999;cursor:default;':''}" onclick="treeNodeClick('${n.id}','${n.name}',${hasChild},event)">
+        ${hasChild?`<span class="t-arrow ${isOpen?'open':''}" id="tarrow-${n.id}">›</span>`:'<span style="width:14px;flex-shrink:0"></span>'}
+        <span>${n.name}${hasChild?' (请选择下级单位)':''}</span>
+      </div>
+      ${hasChild?`<div class="tree-children ${isOpen?'open':''}" id="tchildren-${n.id}">${buildTree(n.children,depth+1)}</div>`:''}
+    </div>`;
+  }).join('');
+}
+function treeNodeClick(id,name,hasChild,e){
+  e.stopPropagation();
+  if(hasChild){
+    const ch=document.getElementById('tchildren-'+id);
+    const ar=document.getElementById('tarrow-'+id);
+    if(ch){ch.classList.toggle('open');ar&&ar.classList.toggle('open');}
+  } else {
+    document.getElementById('unit-value-home').value=id;
+    const d=document.getElementById('unit-display-home');
+    d.textContent=name;d.style.color='#333';
+    closeTree();
+  }
+}
+function toggleTree(e,view){
+  e.stopPropagation();
+  const popup=document.getElementById('tree-popup-'+view);
+  if(!popup.innerHTML){popup.innerHTML=buildTree(orgTree);}
+  const trigger=document.getElementById('unit-trigger-'+view);
+  const rect=trigger.getBoundingClientRect();
+  popup.style.top=(rect.bottom+4)+'px';
+  popup.style.left=rect.left+'px';
+  popup.classList.toggle('show');
+  treeOpenHome=popup.classList.contains('show');
+}
+function closeTree(){document.getElementById('tree-popup-home').classList.remove('show');treeOpenHome=false;}
+document.addEventListener('click',e=>{if(treeOpenHome&&!e.target.closest('#tree-popup-home')&&!e.target.closest('#unit-trigger-home'))closeTree();});
+
+// 导航 / 标签页
+function toggleNav(key){
+  const s=document.getElementById('sub-'+key),a=document.getElementById('arrow-'+key);
+  s.classList.toggle('open');a.classList.toggle('open');
+}
+const openTabs=['活跃度分析'];
+function switchTab(name){
+  if(!openTabs.includes(name)){
+    openTabs.push(name);
+    const t=document.createElement('div');
+    t.className='tab';t.id='tab-'+name;
+    t.innerHTML=`${name} <span class="close-x" onclick="removeTab('${name}',event)">×</span>`;
+    t.onclick=()=>activateTab(name);
+    document.getElementById('tabbar').appendChild(t);
+  }
+  activateTab(name);
+  document.querySelectorAll('.nav-sub-item').forEach(el=>el.classList.toggle('active',el.textContent.trim()===name));
+}
+function activateTab(name){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.id==='tab-'+name));}
+function removeTab(name,e){e&&e.stopPropagation();const t=document.getElementById('tab-'+name);if(t){t.remove();openTabs.splice(openTabs.indexOf(name),1);}}
+
+// Toast
+function showToast(msg,type='success'){
+  const t=document.getElementById('toast');
+  const icon=document.getElementById('toast-icon');
+  const msgEl=document.getElementById('toast-msg');
+  t.className='toast show '+type;
+  icon.textContent=type==='success'?'✓':type==='error'?'✕':'⚠';
+  msgEl.textContent=msg;
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// Init
+renderHomeTable();
+</script>
+</body>
+</html>

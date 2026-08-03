@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>销售统计 — 运营管理系统</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;font-size:13px;background:#f0f2f5;display:flex;height:100vh;overflow:hidden;color:#333}
+/* ── Sidebar ── */
+.sidebar{width:188px;min-width:188px;background:#1a3a5c;color:#fff;display:flex;flex-direction:column;height:100vh;overflow-y:auto;flex-shrink:0}
+.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:2px}
+.sidebar-logo{padding:14px 16px 12px;background:#143050;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.sidebar-logo .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,#4096ff,#1677ff);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.sidebar-logo .brand{font-size:14px;font-weight:600;color:#fff;line-height:1.3}
+.nav-item{display:flex;align-items:center;gap:8px;padding:11px 16px;cursor:pointer;color:rgba(255,255,255,.78);transition:all .18s;font-size:13px}
+.nav-item:hover{background:rgba(64,150,255,.18);color:#fff}
+.nav-item.active{background:rgba(64,150,255,.25);color:#fff}
+.nav-item.parent{justify-content:space-between}
+.nav-item .icon{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.nav-sub{overflow:hidden;max-height:0;transition:max-height .28s ease;background:rgba(0,0,0,.18)}
+.nav-sub.open{max-height:600px}
+.nav-sub-item{display:block;padding:9px 16px 9px 42px;color:rgba(255,255,255,.62);cursor:pointer;font-size:12px;transition:all .18s}
+.nav-sub-item:hover{color:#fff;background:rgba(64,150,255,.15)}
+.nav-sub-item.active{color:#69b1ff;background:rgba(64,150,255,.22);font-weight:500}
+.arrow{font-size:11px;transition:transform .28s;color:rgba(255,255,255,.45)}
+.arrow.open{transform:rotate(90deg)}
+/* ── Main ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{background:#fff;padding:0 16px;height:46px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e8e8e8;flex-shrink:0}
+.breadcrumb{display:flex;align-items:center;gap:5px;color:#888;font-size:12px}
+.breadcrumb .sep{color:#d9d9d9}
+.breadcrumb .cur{color:#1677ff}
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.topbar-icon{width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:50%;color:#888;font-size:14px}
+.topbar-icon:hover{background:#f0f2f5}
+.avatar{width:28px;height:28px;background:#1677ff;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;cursor:pointer;font-weight:600}
+.tabbar{background:#fff;border-bottom:1px solid #e8e8e8;display:flex;overflow-x:auto;flex-shrink:0;min-height:36px}
+.tabbar::-webkit-scrollbar{height:2px}
+.tab{display:flex;align-items:center;gap:5px;padding:7px 14px;cursor:pointer;border-right:1px solid #f0f0f0;white-space:nowrap;color:#777;border-bottom:2px solid transparent;flex-shrink:0;font-size:12px}
+.tab:hover{background:#fafafa;color:#333}
+.tab.active{color:#1677ff;border-bottom-color:#1677ff}
+.tab .close-x{font-size:11px;opacity:.45;margin-left:1px;line-height:1}
+.tab .close-x:hover{opacity:1;color:#f00}
+/* ── Content ── */
+.content{flex:1;padding:12px 14px;overflow:auto;display:flex;flex-direction:column;gap:10px}
+.card{background:#fff;border-radius:6px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+/* ── Filter ── */
+.filter-row{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap}
+.field{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.field label{white-space:nowrap;color:#666;font-size:12px;flex-shrink:0}
+.field input,.field select,.field .tree-trigger{height:30px;border:1px solid #d9d9d9;border-radius:4px;padding:0 8px;font-size:12px;outline:none;color:#333;background:#fff;min-width:0}
+.field input:focus,.field select:focus{border-color:#1677ff;box-shadow:0 0 0 2px rgba(22,119,255,.1)}
+.field-unit{flex:0 0 auto}.field-unit .tree-trigger{width:200px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:4px;user-select:none}
+.field-name input{width:150px}
+.field-code input{width:110px}
+.field-date input{width:130px}
+/* Buttons */
+.btn{height:30px;padding:0 14px;border:none;border-radius:4px;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:4px;transition:all .18s;white-space:nowrap}
+.btn-primary{background:#1677ff;color:#fff}
+.btn-primary:hover{background:#4096ff}
+.btn-default{background:#fff;color:#555;border:1px solid #d9d9d9}
+.btn-default:hover:not(:disabled){color:#1677ff;border-color:#1677ff}
+.btn-reset{background:#fff;color:#666;border:1px solid #d9d9d9}
+.btn-reset:hover{background:#f5f5f5}
+/* Stat type radio */
+.stat-tabs{display:flex;gap:10px;margin-bottom:8px;align-items:center}
+.stat-tabs input[type="radio"]{display:none}
+.stat-tabs label{padding:5px 14px;border-radius:4px;cursor:pointer;font-size:12px;color:#666;border:1px solid #d9d9d9;background:#fff;transition:all .18s;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+.stat-tabs label::before{content:'';width:12px;height:12px;border:1px solid #d9d9d9;border-radius:50%;display:inline-block;transition:all .18s;flex-shrink:0}
+.stat-tabs input[type="radio"]:checked + label{background:#1677ff;color:#fff;border-color:#1677ff}
+.stat-tabs input[type="radio"]:checked + label::before{border-color:#fff;background:#fff;box-shadow:inset 0 0 0 3px #1677ff}
+.stat-tabs label:hover{color:#1677ff;border-color:#1677ff}
+/* Table */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;table-layout:auto}
+thead th{background:#f5f8ff;padding:9px 10px;text-align:left;font-weight:600;color:#4a5568;font-size:12px;border-bottom:2px solid #dce8ff;white-space:nowrap;position:sticky;top:0;z-index:2}
+tbody td{padding:8px 10px;border-bottom:1px solid #f0f3fa;color:#333;font-size:12px;vertical-align:middle}
+tbody tr:hover{background:#f0f6ff}
+/* Pagination */
+.pager{display:flex;align-items:center;gap:5px;padding-top:10px;border-top:1px solid #f0f0f0;margin-top:4px;flex-wrap:wrap}
+.pager .total{color:#666;font-size:12px;margin-right:4px}
+.pager select{height:26px;border:1px solid #d9d9d9;border-radius:4px;padding:0 4px;font-size:12px}
+.pager .pg-btn{min-width:28px;height:28px;border:1px solid #d9d9d9;background:#fff;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:#555}
+.pager .pg-btn:hover,.pager .pg-btn.active{background:#1677ff;color:#fff;border-color:#1677ff}
+.pager .pg-btn:disabled{opacity:.35;cursor:default;pointer-events:none}
+.pager .jumper{display:flex;align-items:center;gap:4px;font-size:12px;color:#666;margin-left:4px}
+.pager .jumper input{width:42px;height:26px;border:1px solid #d9d9d9;border-radius:4px;text-align:center;font-size:12px;outline:none}
+/* ── Tree dropdown ── */
+.tree-popup{position:fixed;background:#fff;border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:2000;padding:6px 0;min-width:240px;max-height:340px;overflow-y:auto;display:none}
+.tree-popup.show{display:block}
+.tree-node{padding:7px 12px 7px calc(12px + var(--depth)*16px);cursor:pointer;display:flex;align-items:center;gap:5px;font-size:12px;color:#333}
+.tree-node:hover{background:#f0f6ff;color:#1677ff}
+.tree-node.has-child:hover{background:#fafafa;color:#999}
+.tree-node .t-check{width:14px;height:14px;border:1px solid #d9d9d9;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;background:#fff;cursor:pointer}
+.tree-node .t-check.checked{background:#1677ff;border-color:#1677ff;color:#fff}
+.tree-node .t-arrow{font-size:10px;color:#bbb;transition:transform .2s;flex-shrink:0}
+.tree-node .t-arrow.open{transform:rotate(90deg)}
+.tree-children{overflow:hidden;max-height:0;transition:max-height .2s}
+.tree-children.open{max-height:500px}
+/* Toast */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#fff;border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:12px 20px;z-index:3000;display:none;align-items:center;gap:10px;font-size:13px}
+.toast.show{display:flex;animation:slideDown .3s}
+.toast.success{border-color:#52c41a;background:#f6ffed}
+.toast-icon{font-size:16px}
+@keyframes slideDown{from{opacity:0;transform:translate(-50%,-20px)}to{opacity:1;transform:translate(-50%,0)}}
+</style>
+</head>
+<body>
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">运</div>
+    <div class="brand">运营管理系统</div>
+  </div>
+          <nav id="nav">
+    <div class="nav-item" onclick="location.href='index.html'"><span class="icon">🏠</span>首页</div>
+    <div class="nav-item parent" onclick="toggleNav('product')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">📦</span>产品管理</span>
+      <span class="arrow" id="arrow-product">›</span>
+    </div>
+    <div class="nav-sub" id="sub-product">
+      <div class="nav-sub-item" onclick="location.href='产品池.html'">产品池</div>
+      <div class="nav-sub-item" onclick="location.href='定价维度.html'">定价维度</div>
+      <div class="nav-sub-item" onclick="location.href='产品定价.html'">产品定价</div>
+      <div class="nav-sub-item" onclick="location.href='产品分配.html'">产品分配</div>
+      <div class="nav-sub-item">申请跨区推广</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('client')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">⚙️</span>客户端配置</span>
+      <span class="arrow" id="arrow-client">›</span>
+    </div>
+    <div class="nav-sub" id="sub-client">
+      <div class="nav-sub-item" onclick="location.href='客户端配置-一级菜单.html'">一级菜单</div>
+      <div class="nav-sub-item">工作台</div>
+      <div class="nav-sub-item" onclick="location.href='客户端配置-财税业务.html'">财税业务</div>
+      <div class="nav-sub-item">服务培训</div>
+      <div class="nav-sub-item">应用市场</div>
+      <div class="nav-sub-item">常用工具</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('equity')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">🏢</span>权益配置</span>
+      <span class="arrow" id="arrow-equity">›</span>
+    </div>
+    <div class="nav-sub" id="sub-equity">
+      <div class="nav-sub-item" onclick="location.href='权益配置.html'">权益配置</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('salecfg')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">📄</span>销售配置</span>
+      <span class="arrow" id="arrow-salecfg">›</span>
+    </div>
+    <div class="nav-sub" id="sub-salecfg">
+      <div class="nav-sub-item">协议模板</div>
+      <div class="nav-sub-item" onclick="location.href='支付配置.html'">支付配置</div>
+      <div class="nav-sub-item">开票配置</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('sales')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">💰</span>销售中心</span>
+      <span class="arrow" id="arrow-sales">›</span>
+    </div>
+    <div class="nav-sub" id="sub-sales">
+      <div class="nav-sub-item" onclick="location.href='订单管理.html'">订单管理</div>
+    </div>
+    <div class="nav-item parent" onclick="toggleNav('analysis')">
+      <span style="display:flex;align-items:center;gap:8px"><span class="icon">📊</span>统计分析</span>
+      <span class="arrow" id="arrow-analysis">›</span>
+    </div>
+    <div class="nav-sub" id="sub-analysis">
+      <div class="nav-sub-item" onclick="location.href='一户式视图.html'">一户式视图</div>
+      <div class="nav-sub-item" onclick="location.href='活跃度分析.html'">活跃度分析</div>
+      <div class="nav-sub-item" onclick="location.href='应用分析.html'">应用分析</div>
+      <div class="nav-sub-item active" onclick="location.href='销售统计.html'">销售统计</div>
+    </div>
+    <div class="nav-item"><span class="icon">👥</span>用户中心</div>
+    <div class="nav-item"><span class="icon">💬</span>消息中心</div>
+  </nav>
+</aside>
+<!-- ══ MAIN ══ -->
+<div class="main">
+  <div class="topbar">
+    <div class="breadcrumb">
+      <span>首页</span><span class="sep">/</span>
+      <span>销售中心</span><span class="sep">/</span>
+      <span class="cur">销售统计</span>
+    </div>
+    <div class="topbar-actions">
+      <div class="topbar-icon" title="搜索">🔍</div>
+      <div class="topbar-icon" title="帮助">❓</div>
+      <div class="topbar-icon" title="全屏">⛶</div>
+      <div class="avatar" title="管理员">管</div>
+    </div>
+  </div>
+  <div class="tabbar" id="tabbar">
+    <div class="tab">首页</div>
+    <div class="tab active" id="tab-销售统计">销售统计 <span class="close-x" onclick="removeTab('销售统计',event)">×</span></div>
+  </div>
+  <div class="content">
+    <!-- Filter -->
+    <div class="card">
+      <div class="filter-row">
+        <div class="field field-date"><label>查询区间</label><input type="text" id="f-date-start" placeholder="日期起 例：2025-01-01"></div>
+        <div class="field field-date"><label>至</label><input type="text" id="f-date-end" placeholder="日期止 例：2025-06-30"></div>
+        <div class="field field-unit">
+          <label>区域</label>
+          <div class="tree-trigger" id="unit-trigger" onclick="toggleTree(event)" tabindex="0">
+            <span id="unit-display" style="color:#bbb;font-size:12px">请选择区域</span>
+            <span style="font-size:10px;color:#bbb">▼</span>
+          </div>
+          <input type="hidden" id="unit-value">
+        </div>
+        <div class="field">
+          <label>商品类别</label>
+          <select id="f-goods-type" style="width:100px">
+            <option value="">全部</option>
+            <option value="product">产品</option>
+            <option value="equity">权益</option>
+          </select>
+        </div>
+        <div class="field field-name"><label>商品名称</label><input type="text" id="f-goods-name" placeholder="请输入商品名称"></div>
+        <div class="field field-name"><label>销售人员</label><input type="text" id="f-sales-person" placeholder="请输入销售人员"></div>
+        <div class="field field-code"><label>销单代码</label><input type="text" id="f-order-code" placeholder="请输入销单代码"></div>
+        <button class="btn btn-primary" onclick="searchTable()">🔍 查询</button>
+        <button class="btn btn-reset" onclick="resetFilter()">↺ 重置</button>
+        <button class="btn btn-default" onclick="exportData()">⬇️ 导出</button>
+      </div>
+    </div>
+    <!-- Tree dropdown -->
+    <div class="tree-popup" id="tree-popup"></div>
+    <!-- Stat type tabs -->
+    <div class="card" style="padding:10px 16px">
+      <div class="stat-tabs">
+        <input type="radio" name="statType" id="stat-region" value="region" checked onchange="switchStat('region')">
+        <label for="stat-region" id="tab-region">按区域统计</label>
+        <input type="radio" name="statType" id="stat-goods" value="goods" onchange="switchStat('goods')">
+        <label for="stat-goods" id="tab-goods">按商品统计</label>
+        <input type="radio" name="statType" id="stat-sales" value="sales" onchange="switchStat('sales')">
+        <label for="stat-sales" id="tab-sales">按销售人员统计</label>
+      </div>
+    </div>
+    <!-- Table -->
+    <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;padding-bottom:0">
+      <div class="tbl-wrap" style="flex:1;overflow:auto">
+        <!-- 按区域统计 -->
+        <table id="table-region">
+          <thead>
+            <tr>
+              <th style="width:36px">序号</th>
+              <th style="width:100px">所属单位</th>
+              <th style="width:90px">销售量</th>
+              <th>销售金额（元）</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-region"></tbody>
+        </table>
+        <!-- 按商品统计 -->
+        <table id="table-goods" style="display:none">
+          <thead>
+            <tr>
+              <th style="width:36px">序号</th>
+              <th style="width:80px">商品类别</th>
+              <th style="width:140px">商品名称</th>
+              <th style="width:90px">销售量</th>
+              <th>销售金额（元）</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-goods"></tbody>
+        </table>
+        <!-- 按销售人员统计 -->
+        <table id="table-sales" style="display:none">
+          <thead>
+            <tr>
+              <th style="width:36px">序号</th>
+              <th style="width:100px">所属单位</th>
+              <th style="width:90px">销售人员</th>
+              <th style="width:110px">销单代码</th>
+              <th style="width:90px">销售量</th>
+              <th>销售金额（元）</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-sales"></tbody>
+        </table>
+      </div>
+      <div class="pager" id="pager" style="padding:10px 0 12px;flex-shrink:0"></div>
+    </div>
+  </div>
+</div>
+<!-- ══ Toast ══ -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toast-icon"></span>
+  <span id="toast-msg"></span>
+</div>
+<script>
+// ══ 机构树 ══
+const orgTree=[
+  {id:'hq',name:'总公司',children:[
+    {id:'bj',name:'北京分公司',children:[
+      {id:'bj-dc',name:'东城区',children:[]},{id:'bj-xc',name:'西城区',children:[]},{id:'bj-cy',name:'朝阳区',children:[]},{id:'bj-hp',name:'海淀区',children:[]}
+    ]},
+    {id:'sh',name:'上海分公司',children:[
+      {id:'sh-hp',name:'黄浦区',children:[]},{id:'sh-jg',name:'静安区',children:[]},{id:'sh-pd',name:'浦东新区',children:[]}
+    ]},
+    {id:'gz',name:'广州分公司',children:[
+      {id:'gz-th',name:'天河区',children:[]},{id:'gz-yh',name:'越秀区',children:[]},{id:'gz-hw',name:'黄埔区',children:[]}
+    ]},
+    {id:'cd',name:'成都分公司',children:[
+      {id:'cd-jj',name:'锦江区',children:[]},{id:'cd-qt',name:'青羊区',children:[]},{id:'cd-wd',name:'武侯区',children:[]}
+    ]},
+    {id:'wh',name:'武汉分公司',children:[
+      {id:'wh-jh',name:'江汉区',children:[]},{id:'wh-wc',name:'武昌区',children:[]},{id:'wh-hk',name:'洪山区',children:[]}
+    ]}
+  ]}
+];
+const orgMap={};
+function buildOrgMap(nodes){nodes.forEach(n=>{orgMap[n.id]=n.name;if(n.children)buildOrgMap(n.children);});}
+buildOrgMap(orgTree[0].children.concat([orgTree[0]]));
+
+// ══ Mock 数据 ══
+const regionData=[
+  {unit:'bj',sales:12580,amount:6784000},
+  {unit:'sh',sales:10920,amount:5892000},
+  {unit:'gz',sales:8760,amount:4728000},
+  {unit:'cd',sales:6540,amount:3526000},
+  {unit:'wh',sales:5430,amount:2931000},
+];
+const goodsData=[
+  {type:'产品',name:'云端记账平台',sales:5621,amount:3125000},
+  {type:'产品',name:'企业安全卫士',sales:2876,amount:1890000},
+  {type:'产品',name:'增值税申报助手',sales:4105,amount:2340000},
+  {type:'权益',name:'VIP年费会员',sales:3200,amount:1920000},
+  {type:'权益',name:'数据加速包',sales:2100,amount:1260000},
+  {type:'产品',name:'电子发票云平台',sales:3890,amount:2150000},
+  {type:'权益',name:'专家咨询包',sales:1560,amount:780000},
+];
+const salesData=[
+  {unit:'bj',person:'张某',code:'S2025001',sales:3450,amount:1862000},
+  {unit:'bj',person:'李某',code:'S2025002',sales:2890,amount:1560000},
+  {unit:'sh',person:'王某',code:'S2025003',sales:4120,amount:2234000},
+  {unit:'sh',person:'刘某',code:'S2025004',sales:3120,amount:1686000},
+  {unit:'gz',person:'陈某',code:'S2025005',sales:2780,amount:1500000},
+  {unit:'cd',person:'赵某',code:'S2025006',sales:1960,amount:1056000},
+  {unit:'wh',person:'孙某',code:'S2025007',sales:1540,amount:831000},
+];
+
+// ══ State ══
+let currentStat='region';
+let currentPage=1,pageSize=10;
+let regionFiltered=[...regionData],goodsFiltered=[...goodsData],salesFiltered=[...salesData];
+let treeSelected=new Set();
+
+// ══ 切换统计维度 ══
+function switchStat(type){
+  currentStat=type;
+  document.getElementById('stat-'+type).checked=true;
+  document.getElementById('table-region').style.display=type==='region'?'table':'none';
+  document.getElementById('table-goods').style.display=type==='goods'?'table':'none';
+  document.getElementById('table-sales').style.display=type==='sales'?'table':'none';
+  currentPage=1;renderTable();
+}
+
+// ══ 渲染表格 ══
+function renderTable(){
+  if(currentStat==='region')renderRegionTable();
+  else if(currentStat==='goods')renderGoodsTable();
+  else renderSalesTable();
+}
+
+function renderRegionTable(){
+  const start=(currentPage-1)*pageSize;
+  const rows=regionFiltered.slice(start,start+pageSize);
+  document.getElementById('tbody-region').innerHTML=rows.map((r,i)=>`
+    <tr>
+      <td style="color:#999;text-align:center">${start+i+1}</td>
+      <td>${orgMap[r.unit]||r.unit}</td>
+      <td>${r.sales.toLocaleString()}</td>
+      <td>${r.amount.toLocaleString()}</td>
+    </tr>`).join('');
+  renderPager(regionFiltered.length);
+}
+function renderGoodsTable(){
+  const start=(currentPage-1)*pageSize;
+  const rows=goodsFiltered.slice(start,start+pageSize);
+  document.getElementById('tbody-goods').innerHTML=rows.map((r,i)=>`
+    <tr>
+      <td style="color:#999;text-align:center">${start+i+1}</td>
+      <td>${r.type}</td>
+      <td>${r.name}</td>
+      <td>${r.sales.toLocaleString()}</td>
+      <td>${r.amount.toLocaleString()}</td>
+    </tr>`).join('');
+  renderPager(goodsFiltered.length);
+}
+function renderSalesTable(){
+  const start=(currentPage-1)*pageSize;
+  const rows=salesFiltered.slice(start,start+pageSize);
+  document.getElementById('tbody-sales').innerHTML=rows.map((r,i)=>`
+    <tr>
+      <td style="color:#999;text-align:center">${start+i+1}</td>
+      <td>${orgMap[r.unit]||r.unit}</td>
+      <td>${r.person}</td>
+      <td>${r.code}</td>
+      <td>${r.sales.toLocaleString()}</td>
+      <td>${r.amount.toLocaleString()}</td>
+    </tr>`).join('');
+  renderPager(salesFiltered.length);
+}
+
+// ══ 分页 ══
+function renderPager(total){
+  const pages=Math.ceil(total/pageSize)||1;
+  let h=`<span class="total">共 ${total} 条</span>
+    <select onchange="changePageSize(this.value)">${[10,20,50].map(n=>`<option ${pageSize==n?'selected':''}>${n}条/页</option>`).join('')}</select>`;
+  h+=`<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+  let arr=[];
+  if(pages<=7){for(let i=1;i<=pages;i++)arr.push(i);}
+  else{arr=[1];if(currentPage>3)arr.push('…');for(let i=Math.max(2,currentPage-1);i<=Math.min(pages-1,currentPage+1);i++)arr.push(i);if(currentPage<pages-2)arr.push('…');arr.push(pages);}
+  arr.forEach(p=>{h+=p==='…'?`<span style="padding:0 3px;color:#bbb">…</span>`:`<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;});
+  h+=`<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===pages?'disabled':''}>›</button>`;
+  h+=`<span class="jumper">前往<input type="number" min="1" max="${pages}" onkeydown="if(event.key==='Enter')goPage(+this.value)">页</span>`;
+  document.getElementById('pager').innerHTML=h;
+}
+function goPage(p){let total;if(currentStat==='region')total=regionFiltered.length;else if(currentStat==='goods')total=goodsFiltered.length;else total=salesFiltered.length;const pages=Math.ceil(total/pageSize)||1;if(p<1||p>pages)return;currentPage=p;renderTable();}
+function changePageSize(v){pageSize=+v;currentPage=1;renderTable();}
+
+// ══ 查询/重置/导出 ══
+function searchTable(){
+  const type=document.getElementById('f-goods-type').value;
+  const name=document.getElementById('f-goods-name').value.trim();
+  const person=document.getElementById('f-sales-person').value.trim();
+  const code=document.getElementById('f-order-code').value.trim();
+  regionFiltered=regionData.filter(()=>true);
+  goodsFiltered=goodsData.filter(r=>{
+    if(type&&((type==='product'&&r.type!=='产品')||(type==='equity'&&r.type!=='权益')))return false;
+    if(name&&!r.name.includes(name))return false;
+    return true;
+  });
+  salesFiltered=salesData.filter(r=>{
+    if(person&&!r.person.includes(person))return false;
+    if(code&&!r.code.includes(code.toUpperCase()))return false;
+    return true;
+  });
+  currentPage=1;renderTable();
+}
+function resetFilter(){
+  document.getElementById('f-date-start').value='';
+  document.getElementById('f-date-end').value='';
+  document.getElementById('f-goods-type').value='';
+  document.getElementById('f-goods-name').value='';
+  document.getElementById('f-sales-person').value='';
+  document.getElementById('f-order-code').value='';
+  treeSelected.clear();updateUnitDisplay();
+  regionFiltered=[...regionData];goodsFiltered=[...goodsData];salesFiltered=[...salesData];
+  currentPage=1;renderTable();
+}
+function exportData(){
+  showToast('导出成功，数据已下载','success');
+}
+
+// ══ Toast ══
+function showToast(msg,type='success'){
+  const t=document.getElementById('toast');
+  const icon=document.getElementById('toast-icon');
+  const msgEl=document.getElementById('toast-msg');
+  t.className='toast show '+type;
+  icon.textContent=type==='success'?'✓':type==='error'?'✕':'⚠';
+  msgEl.textContent=msg;
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ══ Tree dropdown (multi-select) ══
+let treeOpen=false;
+function buildTree(nodes,depth=0){
+  return nodes.map(n=>{
+    const hasChild=n.children&&n.children.length>0;
+    const isOpen=depth<1&&hasChild;
+    const checked=treeSelected.has(n.id)?'checked':'';
+    return `<div>
+      <div class="tree-node ${hasChild?'has-child':''}" style="--depth:${depth};${hasChild?'color:#999;cursor:default;':''}" onclick="treeNodeClick('${n.id}','${n.name}',${hasChild},event)">
+        ${hasChild?`<span class="t-arrow ${isOpen?'open':''}" id="tarrow-${n.id}">›</span>`:'<span style="width:14px;flex-shrink:0"></span>'}
+        <span class="t-check ${checked}" id="tcheck-${n.id}" onclick="treeCheckClick('${n.id}',event)">${checked?'✓':''}</span>
+        <span>${n.name}</span>
+      </div>
+      ${hasChild?`<div class="tree-children ${isOpen?'open':''}" id="tchildren-${n.id}">${buildTree(n.children,depth+1)}</div>`:''}
+    </div>`;
+  }).join('');
+}
+function treeCheckClick(id,e){
+  e.stopPropagation();
+  if(treeSelected.has(id)){treeSelected.delete(id);}else{treeSelected.add(id);}
+  updateUnitDisplay();
+  refreshTreeChecks();
+}
+function treeNodeClick(id,name,hasChild,e){
+  e.stopPropagation();
+  if(hasChild){
+    const ch=document.getElementById('tchildren-'+id);
+    const ar=document.getElementById('tarrow-'+id);
+    if(ch){ch.classList.toggle('open');ar&&ar.classList.toggle('open');}
+  }else{
+    treeCheckClick(id,e);
+  }
+}
+function refreshTreeChecks(){
+  document.querySelectorAll('.t-check').forEach(el=>{
+    const id=el.id.replace('tcheck-','');
+    const checked=treeSelected.has(id);
+    el.classList.toggle('checked',checked);
+    el.textContent=checked?'✓':'';
+  });
+}
+function updateUnitDisplay(){
+  const d=document.getElementById('unit-display');
+  if(treeSelected.size===0){d.textContent='请选择区域';d.style.color='#bbb';}
+  else if(treeSelected.size===1){d.textContent=orgMap[[...treeSelected][0]]||[...treeSelected][0];d.style.color='#333';}
+  else{d.textContent=`已选择 ${treeSelected.size} 个区域`;d.style.color='#333';}
+}
+function toggleTree(e){
+  e.stopPropagation();
+  const popup=document.getElementById('tree-popup');
+  if(!popup.innerHTML){popup.innerHTML=buildTree(orgTree);}
+  const trigger=document.getElementById('unit-trigger');
+  const rect=trigger.getBoundingClientRect();
+  popup.style.top=(rect.bottom+4)+'px';
+  popup.style.left=rect.left+'px';
+  popup.classList.toggle('show');
+  treeOpen=popup.classList.contains('show');
+}
+function closeTree(){document.getElementById('tree-popup').classList.remove('show');treeOpen=false;}
+document.addEventListener('click',e=>{if(treeOpen&&!e.target.closest('#tree-popup')&&!e.target.closest('#unit-trigger'))closeTree();});
+
+// ══ Nav / Tabs ══
+function toggleNav(key){
+  const s=document.getElementById('sub-'+key),a=document.getElementById('arrow-'+key);
+  s.classList.toggle('open');a.classList.toggle('open');
+}
+const openTabs=['销售统计'];
+function switchTab(name){
+  if(!openTabs.includes(name)){
+    openTabs.push(name);
+    const t=document.createElement('div');
+    t.className='tab';t.id='tab-'+name;
+    t.innerHTML=`${name} <span class="close-x" onclick="removeTab('${name}',event)">×</span>`;
+    t.onclick=()=>activateTab(name);
+    document.getElementById('tabbar').appendChild(t);
+  }
+  activateTab(name);
+  document.querySelectorAll('.nav-sub-item').forEach(el=>el.classList.toggle('active',el.textContent.trim()===name));
+}
+function activateTab(name){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.id==='tab-'+name));}
+function removeTab(name,e){e&&e.stopPropagation();const t=document.getElementById('tab-'+name);if(t){t.remove();openTabs.splice(openTabs.indexOf(name),1);}}
+
+// ══ Init ══
+renderTable();
+</script>
+</body>
+</html>
