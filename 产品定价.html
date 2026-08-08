@@ -233,6 +233,7 @@ tbody tr.selected{background:#e6f4ff}
     <div class="nav-sub" id="sub-analysis">
       <div class="nav-sub-item" onclick="location.href='一户式视图.html'">一户式视图</div>
       <div class="nav-sub-item" onclick="location.href='活跃度分析.html'">活跃度分析</div>
+      <div class="nav-sub-item" onclick="location.href='用户活跃统计.html'">用户活跃统计</div>
       <div class="nav-sub-item" onclick="location.href='应用分析.html'">应用分析</div>
       <div class="nav-sub-item" onclick="location.href='销售统计.html'">销售统计</div>
     </div>
@@ -411,16 +412,16 @@ const dimensionConfigs={
 
 // ══ Mock 产品定价记录 ══
 const pricingRecords=[
-  {id:'PRI001',productId:'PRD001',chargeType:'收费',isGuidePrice:'是',shortName:'记账月费',dimDetails:[{name:'授权时长',param:'month',desc:'按月订阅，灵活续费'},{name:'版本',param:'standard',desc:'标准版功能'}],guidePrice:299,actualPrice:199,taxRate:6,priceWithoutTax:187.74,taxAmount:11.26,description:'云端记账平台按月订阅服务，包含基础记账、报表生成等功能。',status:true,creator:'管理员',createTime:'2024-06-12 09:30:00',updater:'管理员',updateTime:'2025-03-08 14:22:00'},
-  {id:'PRI002',productId:'PRD001',chargeType:'收费',isGuidePrice:'否',shortName:'记账年费',dimDetails:[{name:'授权时长',param:'year',desc:'按年订阅，优惠20%'},{name:'版本',param:'pro',desc:'专业版功能'}],guidePrice:2999,actualPrice:1999,taxRate:6,priceWithoutTax:1885.85,taxAmount:113.15,description:'云端记账平台按年订阅服务，享受8折优惠，含高级报表分析。',status:true,creator:'管理员',createTime:'2024-06-15 10:00:00',updater:'管理员',updateTime:'2025-03-10 11:30:00'},
-  {id:'PRI003',productId:'PRD002',chargeType:'收费',isGuidePrice:'是',shortName:'安全年费',dimDetails:[{name:'授权时长',param:'year',desc:'年度授权'},{name:'功能模块',param:'full',desc:'全功能模块'}],guidePrice:5999,actualPrice:4999,taxRate:13,priceWithoutTax:4423.89,taxAmount:575.11,description:'企业安全卫士年度授权，提供终端防病毒、网络入侵检测等全方位安全防护。',status:true,creator:'管理员',createTime:'2024-07-03 11:15:00',updater:'管理员',updateTime:'2025-01-20 10:05:00'},
-  {id:'PRI004',productId:'PRD003',chargeType:'免费',isGuidePrice:'否',shortName:'申报免费',dimDetails:[{name:'发票张数',param:'unlimited',desc:'不限张数'}],guidePrice:0,actualPrice:0,taxRate:0,priceWithoutTax:0,taxAmount:0,description:'增值税申报助手免费版，支持基础申报功能。',status:true,creator:'管理员',createTime:'2024-05-18 16:45:00',updater:'管理员',updateTime:'2025-02-11 09:18:00'},
-  {id:'PRI005',productId:'PRD004',chargeType:'收费',isGuidePrice:'是',shortName:'发票月费',dimDetails:[{name:'授权时长',param:'month',desc:'按月计费'},{name:'发票张数',param:'1000',desc:'每月1000张'},{name:'版本',param:'standard',desc:'标准版'}],guidePrice:399,actualPrice:299,taxRate:6,priceWithoutTax:282.08,taxAmount:16.92,description:'电子发票云平台月度套餐，支持增值税专票、普票、电子发票等多种票型。',status:false,creator:'管理员',createTime:'2024-08-22 08:00:00',updater:'管理员',updateTime:'2025-04-01 17:30:00'},
-  {id:'PRI006',productId:'PRD005',chargeType:'收费',isGuidePrice:'否',shortName:'年报季费',dimDetails:[{name:'版本',param:'basic',desc:'基础版'},{name:'功能模块',param:'report',desc:'年报模块'}],guidePrice:199,actualPrice:149,taxRate:6,priceWithoutTax:140.57,taxAmount:8.43,description:'工商年报通季度套餐，一键完成工商年报在线申报与归档。',status:true,creator:'管理员',createTime:'2024-09-05 13:20:00',updater:'管理员',updateTime:'2025-05-12 11:45:00'},
-  {id:'PRI007',productId:'PRD006',chargeType:'收费',isGuidePrice:'是',shortName:'信用年费',dimDetails:[{name:'授权时长',param:'year',desc:'年度授权'}],guidePrice:999,actualPrice:799,taxRate:6,priceWithoutTax:753.77,taxAmount:45.23,description:'企业信用雷达年度服务，整合工商、司法、舆情等多维企业信用数据。',status:true,creator:'管理员',createTime:'2024-04-28 10:10:00',updater:'管理员',updateTime:'2025-03-25 15:00:00'},
-  {id:'PRI008',productId:'PRD007',chargeType:'收费',isGuidePrice:'否',shortName:'课堂月费',dimDetails:[{name:'授权时长',param:'month',desc:'按月订阅'},{name:'版本',param:'premium',desc:'高级版'},{name:'功能模块',param:'all',desc:'全课程模块'}],guidePrice:599,actualPrice:499,taxRate:6,priceWithoutTax:470.75,taxAmount:28.25,description:'职业技能云课堂月度套餐，涵盖财税、法律、人力资源等数百门课程。',status:false,creator:'管理员',createTime:'2024-10-14 09:00:00',updater:'管理员',updateTime:'2025-06-18 08:30:00'},
-  {id:'PRI009',productId:'PRD008',chargeType:'收费',isGuidePrice:'是',shortName:'社保季费',dimDetails:[{name:'发票张数',param:'500',desc:'每月500张'},{name:'功能模块',param:'sb+gjj',desc:'社保+公积金'}],guidePrice:899,actualPrice:699,taxRate:13,priceWithoutTax:618.58,taxAmount:80.42,description:'社保公积金代办季度服务，支持全国主要城市社保、住房公积金的申报缴纳。',status:true,creator:'管理员',createTime:'2024-03-10 14:00:00',updater:'管理员',updateTime:'2025-01-08 16:20:00'},
-  {id:'PRI010',productId:'PRD009',chargeType:'免费',isGuidePrice:'否',shortName:'机器人免费',dimDetails:[{name:'版本',param:'lite',desc:'轻量版'}],guidePrice:0,actualPrice:0,taxRate:0,priceWithoutTax:0,taxAmount:0,description:'智能问答机器人免费版，支持基础问答与知识库检索。',status:true,creator:'管理员',createTime:'2024-11-01 11:30:00',updater:'管理员',updateTime:'2025-07-10 09:45:00'},
+  {id:'PRI001',productId:'PRD001',chargeType:'收费',isGuidePrice:'是',shortName:'记账月费',dimDetails:[{name:'授权时长',param:'month',desc:'按月订阅，灵活续费'},{name:'版本',param:'standard',desc:'标准版功能'}],guidePrice:299,regionPrice:189,actualPrice:199,taxRate:6,priceWithoutTax:187.74,taxAmount:11.26,description:'云端记账平台按月订阅服务，包含基础记账、报表生成等功能。',status:true,creator:'管理员',createTime:'2024-06-12 09:30:00',updater:'管理员',updateTime:'2025-03-08 14:22:00'},
+  {id:'PRI002',productId:'PRD001',chargeType:'收费',isGuidePrice:'否',shortName:'记账年费',dimDetails:[{name:'授权时长',param:'year',desc:'按年订阅，优惠20%'},{name:'版本',param:'pro',desc:'专业版功能'}],guidePrice:2999,regionPrice:1899,actualPrice:1999,taxRate:6,priceWithoutTax:1885.85,taxAmount:113.15,description:'云端记账平台按年订阅服务，享受8折优惠，含高级报表分析。',status:true,creator:'管理员',createTime:'2024-06-15 10:00:00',updater:'管理员',updateTime:'2025-03-10 11:30:00'},
+  {id:'PRI003',productId:'PRD002',chargeType:'收费',isGuidePrice:'是',shortName:'安全年费',dimDetails:[{name:'授权时长',param:'year',desc:'年度授权'},{name:'功能模块',param:'full',desc:'全功能模块'}],guidePrice:5999,regionPrice:4799,actualPrice:4999,taxRate:13,priceWithoutTax:4423.89,taxAmount:575.11,description:'企业安全卫士年度授权，提供终端防病毒、网络入侵检测等全方位安全防护。',status:true,creator:'管理员',createTime:'2024-07-03 11:15:00',updater:'管理员',updateTime:'2025-01-20 10:05:00'},
+  {id:'PRI004',productId:'PRD003',chargeType:'免费',isGuidePrice:'否',shortName:'申报免费',dimDetails:[{name:'发票张数',param:'unlimited',desc:'不限张数'}],guidePrice:0,regionPrice:0,actualPrice:0,taxRate:0,priceWithoutTax:0,taxAmount:0,description:'增值税申报助手免费版，支持基础申报功能。',status:true,creator:'管理员',createTime:'2024-05-18 16:45:00',updater:'管理员',updateTime:'2025-02-11 09:18:00'},
+  {id:'PRI005',productId:'PRD004',chargeType:'收费',isGuidePrice:'是',shortName:'发票月费',dimDetails:[{name:'授权时长',param:'month',desc:'按月计费'},{name:'发票张数',param:'1000',desc:'每月1000张'},{name:'版本',param:'standard',desc:'标准版'}],guidePrice:399,regionPrice:279,actualPrice:299,taxRate:6,priceWithoutTax:282.08,taxAmount:16.92,description:'电子发票云平台月度套餐，支持增值税专票、普票、电子发票等多种票型。',status:false,creator:'管理员',createTime:'2024-08-22 08:00:00',updater:'管理员',updateTime:'2025-04-01 17:30:00'},
+  {id:'PRI006',productId:'PRD005',chargeType:'收费',isGuidePrice:'否',shortName:'年报季费',dimDetails:[{name:'版本',param:'basic',desc:'基础版'},{name:'功能模块',param:'report',desc:'年报模块'}],guidePrice:199,regionPrice:139,actualPrice:149,taxRate:6,priceWithoutTax:140.57,taxAmount:8.43,description:'工商年报通季度套餐，一键完成工商年报在线申报与归档。',status:true,creator:'管理员',createTime:'2024-09-05 13:20:00',updater:'管理员',updateTime:'2025-05-12 11:45:00'},
+  {id:'PRI007',productId:'PRD006',chargeType:'收费',isGuidePrice:'是',shortName:'信用年费',dimDetails:[{name:'授权时长',param:'year',desc:'年度授权'}],guidePrice:999,regionPrice:749,actualPrice:799,taxRate:6,priceWithoutTax:753.77,taxAmount:45.23,description:'企业信用雷达年度服务，整合工商、司法、舆情等多维企业信用数据。',status:true,creator:'管理员',createTime:'2024-04-28 10:10:00',updater:'管理员',updateTime:'2025-03-25 15:00:00'},
+  {id:'PRI008',productId:'PRD007',chargeType:'收费',isGuidePrice:'否',shortName:'课堂月费',dimDetails:[{name:'授权时长',param:'month',desc:'按月订阅'},{name:'版本',param:'premium',desc:'高级版'},{name:'功能模块',param:'all',desc:'全课程模块'}],guidePrice:599,regionPrice:469,actualPrice:499,taxRate:6,priceWithoutTax:470.75,taxAmount:28.25,description:'职业技能云课堂月度套餐，涵盖财税、法律、人力资源等数百门课程。',status:false,creator:'管理员',createTime:'2024-10-14 09:00:00',updater:'管理员',updateTime:'2025-06-18 08:30:00'},
+  {id:'PRI009',productId:'PRD008',chargeType:'收费',isGuidePrice:'是',shortName:'社保季费',dimDetails:[{name:'发票张数',param:'500',desc:'每月500张'},{name:'功能模块',param:'sb+gjj',desc:'社保+公积金'}],guidePrice:899,regionPrice:659,actualPrice:699,taxRate:13,priceWithoutTax:618.58,taxAmount:80.42,description:'社保公积金代办季度服务，支持全国主要城市社保、住房公积金的申报缴纳。',status:true,creator:'管理员',createTime:'2024-03-10 14:00:00',updater:'管理员',updateTime:'2025-01-08 16:20:00'},
+  {id:'PRI010',productId:'PRD009',chargeType:'免费',isGuidePrice:'否',shortName:'机器人免费',dimDetails:[{name:'版本',param:'lite',desc:'轻量版'}],guidePrice:0,regionPrice:0,actualPrice:0,taxRate:0,priceWithoutTax:0,taxAmount:0,description:'智能问答机器人免费版，支持基础问答与知识库检索。',status:true,creator:'管理员',createTime:'2024-11-01 11:30:00',updater:'管理员',updateTime:'2025-07-10 09:45:00'},
 ];
 
 // ══ State ══
@@ -631,8 +632,9 @@ function openFormModal(editId){
   const productUnit=isEdit?products.find(p=>p.id===record.productId)?.unit:'';
   const sameUnit=isEdit&&productUnit===currentUserUnit;
 
-  // Guide/actual price readonly flags
+  // Guide/region/actual price readonly flags
   const guideReadonly=!isEdit?false:(sameUnit?false:true);
+  const regionReadonly=!isEdit?true:(sameUnit?true:false);
   const actualReadonly=!isEdit?true:(sameUnit?true:false);
 
   document.getElementById('form-body').innerHTML=`
@@ -681,6 +683,10 @@ function openFormModal(editId){
       <div class="form-item"><label><span class="req">*</span>指导价(元)</label>
         <input id="ff-guide" type="number" step="0.01" value="${isEdit?record.guidePrice:''}" placeholder="0.00" ${guideReadonly?'readonly':''}>
         <div class="err-msg" id="err-guide">请输入指导价</div>
+      </div>
+      <div class="form-item"><label>区域执行价(元) <span style="font-size:11px;color:#999;font-weight:normal">80%~120%自主调价空间</span></label>
+        <input id="ff-region" type="number" step="0.01" value="${isEdit?record.regionPrice:''}" placeholder="0.00" ${regionReadonly?'readonly':''}>
+        <div class="err-msg" id="err-region">请输入区域执行价</div>
       </div>
       <div class="form-item"><label>实际售价(元)</label>
         <input id="ff-actual" type="number" step="0.01" value="${isEdit?record.actualPrice:''}" placeholder="0.00" oninput="calcTax()" ${actualReadonly?'readonly':''}>
@@ -785,6 +791,7 @@ function saveForm(){
   const charge=document.getElementById('ff-charge').value;
   const shortName=document.getElementById('ff-short').value.trim();
   const guidePrice=parseFloat(document.getElementById('ff-guide').value)||0;
+  const regionPrice=parseFloat(document.getElementById('ff-region').value)||0;
   const m=document.getElementById('form-modal');
   const isEdit=!!m._editId;
   let hasError=false;
@@ -864,12 +871,14 @@ function saveForm(){
   if(m._editId){
     const editId=m._editId;
     const record=pricingRecords.find(r=>r.id===editId);
+    const regionInput=document.getElementById('ff-region');
     const actualInput=document.getElementById('ff-actual');
+    const regionPriceVal=regionInput.hasAttribute('readonly')?record.regionPrice:(parseFloat(regionInput.value)||0);
     const actualPrice=actualInput.hasAttribute('readonly')?record.actualPrice:(parseFloat(actualInput.value)||0);
     const priceWithoutTax=actualPrice/(1+taxRate/100);
     const taxAmount=actualPrice-priceWithoutTax;
     Object.assign(record,{
-      chargeType:charge,shortName,dimDetails,guidePrice,actualPrice,taxRate,priceWithoutTax,taxAmount,description,status,
+      chargeType:charge,shortName,dimDetails,guidePrice,regionPrice:regionPriceVal,actualPrice,taxRate,priceWithoutTax,taxAmount,description,status,
       updater:currentUser,updateTime:currentTime
     });
     showToast('产品定价保存成功','success');
@@ -880,7 +889,7 @@ function saveForm(){
     const maxN=pricingRecords.reduce((m,r)=>Math.max(m,+(r.id.replace('PRI',''))||0),0);
     savedId='PRI'+String(maxN+1).padStart(3,'0');
     pricingRecords.push({
-      id:savedId,productId,chargeType:charge,shortName,dimDetails,guidePrice,actualPrice,taxRate,priceWithoutTax,taxAmount,description,status,
+      id:savedId,productId,chargeType:charge,shortName,dimDetails,guidePrice,regionPrice,actualPrice,taxRate,priceWithoutTax,taxAmount,description,status,
       creator:currentUser,createTime:currentTime,updater:currentUser,updateTime:currentTime
     });
     // Switch to edit mode after first save

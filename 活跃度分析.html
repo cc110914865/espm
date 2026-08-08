@@ -125,8 +125,10 @@ tbody tr.selected{background:#e6f4ff}
 .condition-row select,.condition-row input{height:30px;border:1px solid #d9d9d9;border-radius:4px;padding:0 8px;font-size:12px;outline:none;color:#333;background:#fff}
 .condition-row select:focus,.condition-row input:focus{border-color:#1677ff;box-shadow:0 0 0 2px rgba(22,119,255,.1)}
 .condition-row .cond-type{width:100px}
+.condition-row .cond-sub{width:110px}
 .condition-row .cond-symbol{width:70px}
-.condition-row .cond-value{width:100px}
+.condition-row .cond-value{width:90px}
+.condition-row .cond-metric{width:90px}
 .condition-row .cond-del{color:#ff4d4f;cursor:pointer;font-size:14px;padding:4px}
 .condition-row .cond-del:hover{color:#ff7875}
 .condition-btns{display:flex;gap:8px;margin-top:6px}
@@ -207,6 +209,7 @@ tbody tr.selected{background:#e6f4ff}
     <div class="nav-sub" id="sub-analysis">
       <div class="nav-sub-item" onclick="location.href='一户式视图.html'">一户式视图</div>
       <div class="nav-sub-item active" onclick="location.href='活跃度分析.html'">活跃度分析</div>
+      <div class="nav-sub-item" onclick="location.href='用户活跃统计.html'">用户活跃统计</div>
       <div class="nav-sub-item" onclick="location.href='应用分析.html'">应用分析</div>
       <div class="nav-sub-item" onclick="location.href='销售统计.html'">销售统计</div>
     </div>
@@ -474,17 +477,31 @@ function onTimeTypeChange(view){
   else{start.type='date';end.type='date';}
 }
 
+// 条件联动配置
+const COND_OPTIONS={
+  login:{label:'登录',sub:[{value:'login',label:'登录'}],metric:[{value:'count',label:'次数'},{value:'score',label:'活跃分'}]},
+  invoiceMethod:{label:'开票方式',sub:[{value:'manual',label:'手工开票'},{value:'ai',label:'AI开票'}],metric:[{value:'count',label:'次数'},{value:'score',label:'活跃分'}]},
+  invoiceModule:{label:'开票模块',sub:[{value:'invoiceModule',label:'开票模块'}],metric:[{value:'count',label:'次数'},{value:'score',label:'活跃分'}]}
+};
+
 // 条件行渲染
 function renderConditions(view){
   const list=document.getElementById('condition-list-'+view);
   const arr=conditions[view]||[];
   if(arr.length===0){list.innerHTML='';return;}
-  list.innerHTML=arr.map((c,i)=>`
+  list.innerHTML=arr.map((c,i)=>{
+    const subOpts=(COND_OPTIONS[c.type]||COND_OPTIONS.login).sub;
+    const metricOpts=(COND_OPTIONS[c.type]||COND_OPTIONS.login).metric;
+    return `
     <div class="condition-row" id="cond-${view}-${c.id}">
       ${i>0?`<span class="logic-label">${c.logic==='and'?'且':'或'}</span>`:''}
-      <select class="cond-type" onchange="updateCondType('${view}',${c.id},this.value)">
+      <select class="cond-type" onchange="onCondTypeChange('${view}',${c.id},this.value)">
         <option value="login" ${c.type==='login'?'selected':''}>登录</option>
-        <option value="use" ${c.type==='use'?'selected':''}>使用</option>
+        <option value="invoiceMethod" ${c.type==='invoiceMethod'?'selected':''}>开票方式</option>
+        <option value="invoiceModule" ${c.type==='invoiceModule'?'selected':''}>开票模块</option>
+      </select>
+      <select class="cond-sub" id="cond-sub-${view}-${c.id}" onchange="updateCondSub('${view}',${c.id},this.value)">
+        ${subOpts.map(o=>`<option value="${o.value}" ${c.sub===o.value?'selected':''}>${o.label}</option>`).join('')}
       </select>
       <select class="cond-symbol" onchange="updateCondSymbol('${view}',${c.id},this.value)">
         <option value=">=" ${c.symbol==='>='?'selected':''}>>=</option>
@@ -493,16 +510,19 @@ function renderConditions(view){
         <option value="<=" ${c.symbol==='<='?'selected':''}><=</option>
         <option value="<" ${c.symbol==='<'?'selected':''}><</option>
       </select>
-      <input type="number" class="cond-value" placeholder="次数" value="${c.value||''}" oninput="updateCondValue('${view}',${c.id},this.value)">
+      <input type="number" class="cond-value" placeholder="数值" value="${c.value||''}" oninput="updateCondValue('${view}',${c.id},this.value)">
+      <select class="cond-metric" onchange="updateCondMetric('${view}',${c.id},this.value)">
+        ${metricOpts.map(o=>`<option value="${o.value}" ${c.metric===o.value?'selected':''}>${o.label}</option>`).join('')}
+      </select>
       <span class="cond-del" onclick="removeCondition('${view}',${c.id})">✕</span>
     </div>
-  `).join('');
+  `}).join('');
 }
 
 function addCondition(view,logic){
   condCounter++;
   if(!conditions[view])conditions[view]=[];
-  conditions[view].push({id:condCounter,logic:conditions[view].length===0?'':logic,type:'login',symbol:'>=',value:''});
+  conditions[view].push({id:condCounter,logic:conditions[view].length===0?'':logic,type:'login',sub:'login',symbol:'>=',value:'',metric:'count'});
   renderConditions(view);
 }
 function removeCondition(view,id){
@@ -511,9 +531,19 @@ function removeCondition(view,id){
   if(conditions[view].length>0)conditions[view][0].logic='';
   renderConditions(view);
 }
-function updateCondType(view,id,val){const c=(conditions[view]||[]).find(x=>x.id===id);if(c)c.type=val;}
+function onCondTypeChange(view,id,val){
+  const c=(conditions[view]||[]).find(x=>x.id===id);
+  if(!c)return;
+  c.type=val;
+  const cfg=COND_OPTIONS[val]||COND_OPTIONS.login;
+  c.sub=cfg.sub[0].value;
+  c.metric=cfg.metric[0].value;
+  renderConditions(view);
+}
+function updateCondSub(view,id,val){const c=(conditions[view]||[]).find(x=>x.id===id);if(c)c.sub=val;}
 function updateCondSymbol(view,id,val){const c=(conditions[view]||[]).find(x=>x.id===id);if(c)c.symbol=val;}
 function updateCondValue(view,id,val){const c=(conditions[view]||[]).find(x=>x.id===id);if(c)c.value=val;}
+function updateCondMetric(view,id,val){const c=(conditions[view]||[]).find(x=>x.id===id);if(c)c.metric=val;}
 
 // 主页表格
 function renderHomeTable(){

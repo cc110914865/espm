@@ -114,7 +114,7 @@ tbody tr:hover{background:#f0f6ff}
 /* Drawer */
 .drawer-overlay{position:fixed;inset:0;background:rgba(0,21,41,.45);z-index:900;display:none;opacity:0;transition:opacity .25s}
 .drawer-overlay.show{display:block;opacity:1}
-.drawer{position:fixed;top:0;right:0;height:100vh;width:720px;max-width:90vw;background:#f0f2f5;display:flex;flex-direction:column;z-index:901;transform:translateX(100%);transition:transform .3s ease;box-shadow:-4px 0 20px rgba(0,0,0,.12)}
+.drawer{position:fixed;top:0;right:0;height:100vh;width:calc(100vw - 188px);background:#f0f2f5;display:flex;flex-direction:column;z-index:901;transform:translateX(100%);transition:transform .3s ease;box-shadow:-4px 0 20px rgba(0,0,0,.12)}
 .drawer.show{transform:translateX(0)}
 .drawer-hd{padding:14px 16px;background:#fff;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .drawer-hd .title{font-size:14px;font-weight:600;color:#1a3a5c}
@@ -194,6 +194,7 @@ tbody tr:hover{background:#f0f6ff}
     <div class="nav-sub" id="sub-analysis">
       <div class="nav-sub-item" onclick="location.href='一户式视图.html'">一户式视图</div>
       <div class="nav-sub-item" onclick="location.href='活跃度分析.html'">活跃度分析</div>
+      <div class="nav-sub-item" onclick="location.href='用户活跃统计.html'">用户活跃统计</div>
       <div class="nav-sub-item active" onclick="location.href='应用分析.html'">应用分析</div>
       <div class="nav-sub-item" onclick="location.href='销售统计.html'">销售统计</div>
     </div>
@@ -266,8 +267,8 @@ tbody tr:hover{background:#f0f6ff}
                 <th style="width:36px">序号</th>
                 <th style="width:120px">产品名称</th>
                 <th style="width:130px">累计付费企业数</th>
-                <th style="width:130px">活跃使用企业数</th>
-                <th style="width:130px">平均使用渗透率</th>
+                <th style="width:130px">活跃企业数</th>
+                <th style="width:130px">活跃渗透率</th>
                 <th class="col-op" style="width:80px">操作</th>
               </tr>
             </thead>
@@ -298,10 +299,13 @@ tbody tr:hover{background:#f0f6ff}
             <tr>
               <th style="width:36px">序号</th>
               <th style="width:120px">所属单位</th>
-              <th style="width:140px">地区用量贡献占比</th>
-              <th style="width:100px">使用次数</th>
-              <th style="width:140px">活跃企业数</th>
-              <th style="width:100px">产品在地区排名</th>
+              <th style="width:80px">规模排名</th>
+              <th style="width:80px">渗透排名</th>
+              <th style="width:130px">累计付费企业数（个）</th>
+              <th style="width:130px">活跃企业数（个）</th>
+              <th style="width:90px">活跃渗透率</th>
+              <th style="width:110px">产品用量（次）</th>
+              <th style="width:120px">用量占比</th>
             </tr>
           </thead>
           <tbody id="detail-tbody"></tbody>
@@ -371,11 +375,11 @@ const homeData=[
 
 // ══ 明细 Mock 数据 ══
 const detailData=[
-  {unit:'bj',contribution:28.5,usage:15820,active:820,ring:'+12%',rank:1},
-  {unit:'sh',contribution:24.3,usage:13460,active:710,ring:'+8%',rank:2},
-  {unit:'gz',contribution:18.7,usage:10370,active:540,ring:'-5%',rank:3},
-  {unit:'cd',contribution:15.2,usage:8440,active:430,ring:'+15%',rank:4},
-  {unit:'wh',contribution:13.3,usage:7390,active:391,ring:'-3%',rank:5},
+  {unit:'bj',scaleRank:1,penetrationRank:2,paidTotal:1200,active:820,ring:'+12%',penetration:'83.8%',usage:15820,contribution:28.5,contributionRing:'+2.3%'},
+  {unit:'sh',scaleRank:2,penetrationRank:1,paidTotal:980,active:710,ring:'+8%',penetration:'86.2%',usage:13460,contribution:24.3,contributionRing:'-1.5%'},
+  {unit:'gz',scaleRank:3,penetrationRank:3,paidTotal:750,active:540,ring:'-5%',penetration:'78.5%',usage:10370,contribution:18.7,contributionRing:'+0.8%'},
+  {unit:'cd',scaleRank:4,penetrationRank:4,paidTotal:620,active:430,ring:'+15%',penetration:'72.1%',usage:8440,contribution:15.2,contributionRing:'-0.5%'},
+  {unit:'wh',scaleRank:5,penetrationRank:5,paidTotal:580,active:391,ring:'-3%',penetration:'69.8%',usage:7390,contribution:13.3,contributionRing:'-1.1%'},
 ];
 
 // ══ State ══
@@ -478,21 +482,26 @@ function renderDetailTable(){
   const rows=detailFiltered.slice(start,start+detailSize);
   document.getElementById('detail-tbody').innerHTML=rows.map((r,i)=>{
     const ringClass=r.ring.startsWith('+')?'ring-up':'ring-down';
+    const cRingClass=r.contributionRing.startsWith('+')?'ring-up':'ring-down';
     return `<tr>
       <td style="color:#999;text-align:center">${start+i+1}</td>
       <td>${orgMap[r.unit]||r.unit}</td>
-      <td>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div class="progress-bar"><div class="fill" style="width:${r.contribution}%"></div></div>
-          <span>${r.contribution}%</span>
-        </div>
-      </td>
-      <td>${r.usage.toLocaleString()}</td>
+      <td>${r.scaleRank}</td>
+      <td>${r.penetrationRank}</td>
+      <td>${r.paidTotal.toLocaleString()}</td>
       <td>
         <span class="op-link" onclick="location.href='一户式视图.html'">${r.active.toLocaleString()}</span>
         <span class="${ringClass}">${r.ring}</span>
       </td>
-      <td>${r.rank}</td>
+      <td>${r.penetration}</td>
+      <td>${r.usage.toLocaleString()}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="progress-bar"><div class="fill" style="width:${r.contribution}%"></div></div>
+          <span>${r.contribution}%</span>
+          <span class="${cRingClass}">${r.contributionRing}</span>
+        </div>
+      </td>
     </tr>`;
   }).join('');
   renderDetailPager();
